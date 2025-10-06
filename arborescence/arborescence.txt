@@ -1,0 +1,22 @@
+projet-environnement
+├── README.md
+├── arborescence
+│   └── generate_tree.py
+├── données
+│   ├── mapping_codes.csv
+│   ├── pipelines_ru.csv
+│   └── pipelines_ru_cut.csv
+├── etapes
+│   ├── amelioration.md
+│   ├── etapes_1.md
+│   ├── etapes_2.md
+│   ├── etapes_3.md
+│   ├── etapes_4.md
+│   ├── etapes_5.md
+│   ├── etapes_6.md
+│   └── etapes_7.md
+├── instalation.sh
+├── lancement
+│   ├── commande.txt
+│   └── requierment.txt
+└── pipeline_russia
