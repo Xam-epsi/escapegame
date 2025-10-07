@@ -68,3 +68,4 @@ données/
 # === Node (si un jour tu ajoutes un front) ===
 node_modules/
 
+*.venv
