@@ -20,6 +20,16 @@ projet-environnement
 │   ├── knn_model.joblib
 │   ├── mapping_codes.csv
 │   └── pipelines_ru.csv
+├── dev_front
+│   ├── apphosting.yaml
+│   ├── components.json
+│   ├── infra.tf
+│   ├── next.config.ts
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── postcss.config.mjs
+│   ├── tailwind.config.ts
+│   └── tsconfig.json
 ├── etapes
 │   ├── __init__.py
 │   ├── amelioration.md
@@ -30,7 +40,8 @@ projet-environnement
 │   ├── etapes_5.md
 │   ├── etapes_6.md
 │   └── etapes_7.md
-├── infra.tf
+├── front_clas
+│   └── flask.py
 ├── instalation.sh
 ├── lancement
 │   └── commande.txt
@@ -40,4 +51,5 @@ projet-environnement
 │   ├── test_api_routes.py
 │   └── test_model_logic.py
 └── verification
+    ├── __init__.py
     └── test_model_predictions.py
