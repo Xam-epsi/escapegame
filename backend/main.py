@@ -6,8 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 from pydantic import BaseModel
 from typing import Optional, List
-from models.ia_model import train_or_load_model, predict_topk
-from utils.loader import load_csv_for_country, load_mapping_codes
+from backend.models.ia_model import train_or_load_model, predict_topk
+from backend.utils.loader import load_csv_for_country, load_mapping_codes
 
 app = FastAPI(title="Pipeline Rescue Backend")
 
@@ -20,16 +20,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 MODEL = None
 MAPPING = {}
 
 @app.on_event("startup")
 def startup_event():
     global MODEL, MAPPING
-    # train or load model
-    MODEL = train_or_load_model()
+    try:
+        MODEL = train_or_load_model()
+    except Exception as e:
+        MODEL = None
+        # print sur console pour debug, et laisser l'API vivante
+        print("⚠️ Warning: modèle IA non chargé à l'initialisation:", e)
+    # mapping est léger => on le charge toujours (ou vide si absent)
     MAPPING = load_mapping_codes()
+
 
 class PredictRequest(BaseModel):
     lat: float

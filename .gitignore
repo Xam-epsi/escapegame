@@ -1,0 +1,21 @@
+# Environnements Python
+venv/
+.env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# Données locales
+data/
+données/
+*.joblib
+
+# Node (si jamais tu fais du front plus tard)
+node_modules/
