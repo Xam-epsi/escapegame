@@ -17,11 +17,10 @@ Entre puzzle miroir, données industrielles et intelligence artificielle, la mis
 ## 🧩 Fonctionnement du jeu
 
 1. **Découverte de la lettre**  
-   - Trouver le code miroir dans le texte (“Cher camarade”).  
    - Accéder au portail sécurisé.
 
 2. **Authentification (Puzzle 3D)**  
-   - Chaque face du puzzle donne un code (7421 / 8576).  
+   - Chaque face du puzzle donne un code (keep / calm).  
    - Le code définit le rôle : Joueur 1 (complet) / Joueur 2 (IA).
 
 3. **Choix du pays**  
@@ -32,9 +31,10 @@ Entre puzzle miroir, données industrielles et intelligence artificielle, la mis
    - Joueur 1 → CSV des pipelines.  
    - Joueur 2 → Console IA prédictive (modèle kNN).  
    - Ensemble, ils complètent les scores de confiance et identifient la fuite.
+   - si tout le tableau est remplis et juste alors un message avec le code apparrait et le nom du pipeline 
 
 5. **Coupure du pipeline**  
-   - Entrée simultanée du code `5309`.  
+   - Entrée seul du code `5309`.  
    - Succès → fuite évitée / Échec → explosion virtuelle.
 
 6. **Révélation finale**  
