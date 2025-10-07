@@ -2,15 +2,17 @@
 import os
 import joblib
 import pandas as pd
-import numpy as np
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.exceptions import NotFittedError
 
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "knn_model.joblib")
-CSV_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "pipelines_ru.csv")
+# 🔧 Correction ici :
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../..", "data"))
+MODEL_PATH = os.path.join(BASE_DIR, "knn_model.joblib")
+CSV_PATH = os.path.join(BASE_DIR, "pipelines_ru.csv")
+
 
 def _load_training_df(csv_path=CSV_PATH):
     df = pd.read_csv(csv_path, sep=";")
@@ -24,7 +26,7 @@ def _load_training_df(csv_path=CSV_PATH):
     df_train = df_train.dropna(subset=["lat","lon","capacity","year"])
     return df_train
 
-def train_and_save_model(csv_path=CSV_PATH, model_path=MODEL_PATH, n_neighbors=3):
+def train_and_save_model(csv_path=CSV_PATH, model_path=MODEL_PATH, n_neighbors=1):
     df = _load_training_df(csv_path)
     if df.shape[0] < 3:
         raise ValueError("Pas assez de lignes valides pour entraîner le modèle.")

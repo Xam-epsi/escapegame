@@ -17,6 +17,7 @@ projet-environnement
 │       └── loader.py
 ├── data
 │   ├── __init__.py
+│   ├── knn_model.joblib
 │   ├── mapping_codes.csv
 │   ├── pipelines_ru.csv
 │   └── pipelines_ru_cut.csv
@@ -35,4 +36,9 @@ projet-environnement
 ├── lancement
 │   └── commande.txt
 ├── pipeline_russia
-└── requirements.txt
+├── requirements.txt
+├── tests
+│   ├── test_api_routes.py
+│   └── test_model_logic.py
+└── verification
+    └── test_model_predictions.py
