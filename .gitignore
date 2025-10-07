@@ -1,21 +1,25 @@
-# Environnements Python
+# === Python ===
 venv/
-.env/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.joblib
 
-# OS / IDE
+# === Données ===
+data/
+données/
+*.csv
+*.log
+
+# === Environnements ===
+.env
+*.env
+
+# === OS / IDE ===
 .DS_Store
 .idea/
 .vscode/
-*.log
 
-# Données locales
-data/
-données/
-*.joblib
-
-# Node (si jamais tu fais du front plus tard)
+# === Node (si un jour tu ajoutes un front) ===
 node_modules/
