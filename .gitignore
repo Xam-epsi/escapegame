@@ -7,7 +7,6 @@ __pycache__/
 *.joblib
 
 # === Données ===
-data/
 données/
 *.csv
 *.log
