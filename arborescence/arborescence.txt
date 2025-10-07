@@ -19,8 +19,7 @@ projet-environnement
 │   ├── __init__.py
 │   ├── knn_model.joblib
 │   ├── mapping_codes.csv
-│   ├── pipelines_ru.csv
-│   └── pipelines_ru_cut.csv
+│   └── pipelines_ru.csv
 ├── etapes
 │   ├── __init__.py
 │   ├── amelioration.md
@@ -35,9 +34,9 @@ projet-environnement
 ├── instalation.sh
 ├── lancement
 │   └── commande.txt
-├── pipeline_russia
 ├── requirements.txt
 ├── tests
+│   ├── __init__.py
 │   ├── test_api_routes.py
 │   └── test_model_logic.py
 └── verification

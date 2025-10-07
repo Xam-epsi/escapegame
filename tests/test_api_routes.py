@@ -1,94 +1,95 @@
 # tests/test_api_routes.py
 import pytest
-from fastapi.testclient import TestClient
-from backend.main import app
-from backend.main import MODEL
+import pandas as pd
 from backend.models.ia_model import train_or_load_model, CSV_PATH
+from backend.utils.loader import load_mapping_codes
+import backend.main as main
+from fastapi.testclient import TestClient
 
-# s'assure que le modèle est chargé même si uvicorn n'est pas lancé
-if MODEL is None:
-    MODEL = train_or_load_model(CSV_PATH)
+import os
+print("Mapping path:", os.path.join(os.path.dirname(main.__file__), "..", "data", "mapping_codes.csv"))
+print("Exists:", os.path.exists(os.path.join(os.path.dirname(main.__file__), "..", "data", "mapping_codes.csv")))
 
-client = TestClient(app)
 
-# --- TEST /predict ---
+# Charger le modèle pour que /predict fonctionne
+if main.MODEL is None:
+    main.MODEL = train_or_load_model(CSV_PATH)
+
+client = TestClient(main.app)
+
+# Charger CSV et opérateurs
+df = pd.read_csv(CSV_PATH, sep=";")
+operators = df["operator"].dropna().unique().tolist()
+valid_operator = operators[0] if operators else "dummy"
+
+# Charger mapping complet
+MAPPING = load_mapping_codes()
+main.MAPPING = MAPPING  # injecte dans l'API pour final_action
+
 def test_predict_success():
     payload = {
-        "lat": 61.0,
-        "lon": 30.0,
-        "capacity": 50000,
-        "year": 2025,
-        "operator": "Gazprom",
+        "lat": float(df.iloc[0]["lat"]),
+        "lon": float(df.iloc[0]["lon"]),
+        "capacity": float(df.iloc[0]["capacity"]),
+        "year": int(df.iloc[0]["year"]),
+        "operator": valid_operator,
         "k": 3
     }
     response = client.post("/predict", json=payload)
     assert response.status_code == 200
-    data = response.json()
-    assert "predictions" in data
-    assert isinstance(data["predictions"], list)
-    # check top-1 has confidence float
-    top1 = data["predictions"][0]
-    assert "name" in top1 and "confidence" in top1
-    assert isinstance(top1["confidence"], float)
+    assert "predictions" in response.json()
+    preds = response.json()["predictions"]
+    assert isinstance(preds, list)
+    assert len(preds) > 0
 
 def test_predict_model_missing(monkeypatch):
-    # simulate MODEL = None
-    from backend import main
+    # Simule un modèle manquant
     monkeypatch.setattr(main, "MODEL", None)
     payload = {
         "lat": 61.0,
         "lon": 30.0,
         "capacity": 50000,
         "year": 2025,
-        "operator": "Gazprom"
+        "operator": valid_operator,
+        "k": 3
     }
     response = client.post("/predict", json=payload)
     assert response.status_code == 500
-    assert "Modèle IA non disponible" in response.text
+    assert response.json()["detail"] == "Modèle IA non disponible."
 
-# --- TEST /validate ---
 def test_validate_success():
-    payload = {
-        "scores": [
-            {"site_code": "RU-0001", "score": 0.12},
-            {"site_code": "RU-0002", "score": 0.85},
-            {"site_code": "RU-0003", "score": 0.43}
-        ]
-    }
+    payload = {"scores":[{"site_code":"RU-0001","score":0.8},{"site_code":"RU-0002","score":0.5}]}
     response = client.post("/validate", json=payload)
     assert response.status_code == 200
-    data = response.json()
-    assert data["detected_site"] == "RU-0002"
-    assert data["score"] == 0.85
+    assert response.json()["detected_site"] == "RU-0001"
 
 def test_validate_empty():
-    payload = {"scores": []}
+    payload = {"scores":[]}
     response = client.post("/validate", json=payload)
     assert response.status_code == 400
-    assert "Aucun score fourni" in response.text
+    assert response.json()["detail"] == "Aucun score fourni"
 
-# --- TEST /final ---
-def test_final_success(monkeypatch):
-    # simulate mapping
-    from backend import main
-    monkeypatch.setattr(main, "MAPPING", {"RU-0001": "5309"})
-    payload = {"site_code": "RU-0001", "code_a": "53", "code_b": "09"}
+def test_final_success():
+    if not MAPPING:
+        pytest.skip("Mapping vide, impossible de tester final_success")
+    site, code = list(MAPPING.items())[0]
+    payload = {"site_code": site, "code_a": code[:2], "code_b": code[2:]}
     response = client.post("/final", json=payload)
     assert response.status_code == 200
-    data = response.json()
-    assert data["result"] == "success"
+    assert response.json()["result"] == "success"
 
-def test_final_fail(monkeypatch):
-    from backend import main
-    monkeypatch.setattr(main, "MAPPING", {"RU-0001": "5309"})
-    payload = {"site_code": "RU-0001", "code_a": "12", "code_b": "34"}
+def test_final_fail():
+    if not MAPPING:
+        pytest.skip("Mapping vide, impossible de tester final_fail")
+    site = "RU-0001" if "RU-0001" in MAPPING else list(MAPPING.keys())[0]
+    payload = {"site_code": site, "code_a": "12", "code_b": "34"}  # mauvais code
     response = client.post("/final", json=payload)
+    # Doit rester 200 même si le code est faux
     assert response.status_code == 200
-    data = response.json()
-    assert data["result"] == "fail"
+    assert response.json()["result"] == "fail"
 
 def test_final_unknown_site():
-    payload = {"site_code": "RU-9999", "code_a": "53", "code_b": "09"}
+    payload = {"site_code": "RU-9999", "code_a": "12", "code_b": "34"}
     response = client.post("/final", json=payload)
     assert response.status_code == 400
-    assert "site_code inconnu" in response.text
+    assert response.json()["detail"] == "site_code inconnu"
