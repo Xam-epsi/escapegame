@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Agent A — Salle de contrôle</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="page">
+  <header class="topbar">
+    <h2>Agent A — Salle de contrôle</h2>
+    <div class="top-actions">
+      <span id="timer" class="alarm">05:00</span>
+      <div style="width:220px">
+        <div id="progressWrap" aria-hidden="true">
+          <div id="progressBar"></div>
+        </div>
+      </div>
+      <a class="back" href="/">↩ Quitter</a>
+    </div>
+  </header>
+
+  <main class="card">
+    <p class="lead">
+      Mission : identifier le pipeline saboté et entrer le code d’arrêt avant la fin du compte à rebours.
+      Vous voyez les données complètes ; notez votre **confiance** (%) à côté de chaque ligne.
+      Seul l'Agent A saisira les codes de coupure à la fin.
+    </p>
+
+    <div class="btn-row">
+      <button id="loadFull" class="secondary">📡 Charger les données (RU — complet)</button>
+    </div>
+
+    <p id="csvStatus" class="muted">Données non chargées.</p>
+
+    <div id="csvContainer" class="table-wrap" aria-live="polite" aria-label="Données pipelines"></div>
+
+    <div class="mission">
+      <h3>Étape finale</h3>
+      <p class="muted">
+        Si vous avez identifié le pipeline à couper, entrez son nom exact (colonne <em>id</em> ou <em>site_code</em>) puis les deux codes d'arrêt.
+        Seul l'Agent A doit les saisir ici.
+      </p>
+
+      <div class="form small">
+        <label for="siteInput">Pipeline suspect (site_code)</label>
+        <input id="siteInput" placeholder="ex : RU-Pipeline-03" />
+
+        <label for="codeA">Code Agent A</label>
+        <input id="codeA" placeholder="----" />
+
+        <label for="codeB">Code Agent B</label>
+        <input id="codeB" placeholder="----" />
+
+        <div class="actions">
+          <button id="finalBtn">🚨 Couper le pipeline</button>
+        </div>
+
+        <div id="finalResult" class="result" aria-live="polite"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/static/js/joueur1.js"></script>
+</body>
+</html>

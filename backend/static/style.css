@@ -1,0 +1,196 @@
+/* style.css — Thème "Salle de contrôle / Espionnage (Pipeline Rescue)" */
+/* Palette sombre, accents rouges, monospace, lisible pour lycéens */
+
+:root{
+  --bg-0: #080708;        /* very dark */
+  --bg-1: #0f0f10;        /* card bg */
+  --panel: #121214;
+  --accent: #d32f2f;      /* alarm/red */
+  --accent-2: #ffa726;    /* orange highlight */
+  --muted: #9aa0a6;
+  --text: #eaeaea;
+  --success: #2ecc71;
+  --danger: #ff5252;
+  --glass: rgba(255,255,255,0.03);
+  --mono: "Courier New", "Lucida Console", Monaco, monospace;
+  --radius: 12px;
+  --shadow: 0 12px 30px rgba(2,2,2,0.6);
+}
+
+/* Reset & layout */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: var(--mono);
+  background:
+    radial-gradient(1200px 400px at 10% 10%, rgba(211,47,47,0.06), transparent 10%),
+    linear-gradient(180deg, var(--bg-0), #070708);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  padding:28px;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  gap:18px;
+}
+
+/* Page container */
+.page{width:100%;max-width:1040px;display:flex;flex-direction:column;gap:14px;align-items:stretch}
+
+/* Topbar */
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:6px 0}
+.topbar h2{margin:0;font-size:1.1rem;color:var(--accent);letter-spacing:0.6px}
+.back{color:var(--muted);text-decoration:none;font-size:0.95rem;border:1px dashed rgba(255,255,255,0.03);padding:6px 10px;border-radius:8px}
+
+/* Card */
+.card{
+  background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+  border-radius:var(--radius);
+  padding:18px;
+  box-shadow:var(--shadow);
+  border:1px solid rgba(255,255,255,0.03);
+}
+
+/* Headings */
+h1{margin:0;font-size:1.6rem;color:var(--accent)}
+h3{margin:8px 0 6px 0;color:var(--accent-2)}
+
+/* Text */
+.lead{color:var(--muted);margin-bottom:10px;font-size:0.95rem}
+.muted{color:var(--muted);font-size:0.9rem}
+
+/* Forms */
+.form{display:flex;flex-direction:column;gap:8px}
+.form.small{max-width:480px}
+label{font-size:0.85rem;color:var(--muted)}
+input[type="text"], input[type="number"], input, select, textarea {
+  background:var(--panel);
+  border:1px solid rgba(255,255,255,0.03);
+  padding:8px 10px;
+  border-radius:8px;
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:0.95rem;
+  outline:none;
+}
+input::placeholder, textarea::placeholder{color:rgba(234,234,234,0.25)}
+input:focus, textarea:focus, select:focus{
+  box-shadow:0 4px 18px rgba(211,47,47,0.08);
+  border-color:rgba(211,47,47,0.6);
+}
+
+/* Buttons */
+button{
+  background:linear-gradient(180deg,var(--accent), #b71c1c);
+  color:#fff;
+  border:0;
+  padding:9px 12px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:700;
+  letter-spacing:0.6px;
+  box-shadow:0 8px 20px rgba(211,47,47,0.12);
+}
+button.secondary{
+  background:transparent;
+  border:1px solid rgba(255,255,255,0.04);
+  color:var(--text);
+}
+button:active{transform:translateY(1px)}
+
+/* Button rows */
+.btn-row{display:flex;gap:10px;margin:8px 0}
+
+/* Table for CSV */
+.table-wrap{overflow:auto;max-height:420px;border-radius:8px;padding:6px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent)}
+.csv-table{width:100%;border-collapse:collapse;font-size:0.9rem}
+.csv-table th{
+  position:sticky;top:0;background:linear-gradient(180deg,rgba(0,0,0,0.4),rgba(255,255,255,0.01));
+  padding:8px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.03);
+  color:var(--accent-2);
+}
+.csv-table td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);vertical-align:middle}
+.csv-table tr:hover td{background:rgba(255,255,255,0.015)}
+
+/* Editable input inside table */
+.csv-table input{
+  width:100%;
+  padding:6px;
+  border-radius:6px;
+  border:1px solid rgba(255,255,255,0.04);
+  background:rgba(0,0,0,0.25);
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:0.9rem;
+}
+
+/* Mission block */
+.mission{margin-top:12px;padding:12px;border-radius:8px;background:linear-gradient(90deg, rgba(255,82,82,0.03), rgba(0,0,0,0.02));border:1px solid rgba(255,82,82,0.03)}
+
+/* Status & messages */
+.muted{font-size:0.9rem}
+.result{margin-top:10px;color:var(--text);white-space:pre-wrap}
+.error{color:var(--danger)}
+.success{color:var(--success)}
+
+/* Small monospace area */
+.mono{font-family:var(--mono);font-size:0.9rem;color:var(--muted)}
+
+/* Alarm badge */
+.alarm{
+  display:inline-block;padding:6px 10px;border-radius:20px;background:linear-gradient(90deg,var(--accent), #ff6e6e);
+  color:#fff;font-weight:700;box-shadow:0 6px 18px rgba(211,47,47,0.14);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse{
+  0%{transform:scale(1);opacity:1}
+  50%{transform:scale(1.03);opacity:0.85}
+  100%{transform:scale(1);opacity:1}
+}
+
+/* Tiny helpers */
+.hint{color:var(--muted);font-size:0.9rem}
+.actions{display:flex;gap:8px;margin-top:8px}
+.top-actions{display:flex;justify-content:space-between;align-items:center}
+
+/* Responsive */
+@media (max-width:720px){
+  body{padding:14px}
+  .page{max-width:100%}
+  .csv-table th, .csv-table td{font-size:0.8rem;padding:6px}
+}
+
+/* Footer / credits small */
+.footer{
+  font-size:0.8rem;color:var(--muted);text-align:center;margin-top:6px;
+  opacity:0.9;
+}
+
+/* --- Progress bar sous le chrono (Agent A) --- */
+#progressWrap{
+  height:10px;
+  width:100%;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  overflow:hidden;
+  margin-top:6px;
+  border:1px solid rgba(255,255,255,0.02);
+}
+#progressBar{
+  height:100%;
+  width:0%;
+  background: linear-gradient(90deg, #ff5252, #d32f2f);
+  transition:width 0.8s linear;
+}
+
+/* Blink and alarm pulse */
+.blink{ animation: blinkAnim 0.85s ease-in-out; }
+@keyframes blinkAnim {
+  0%{opacity:1}
+  50%{opacity:0.35}
+  100%{opacity:1}
+}
+.alarmPulse{ animation: pulse 1.4s ease-in-out; }
+

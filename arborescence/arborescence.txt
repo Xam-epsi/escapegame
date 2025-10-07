@@ -12,6 +12,16 @@ projet-environnement
 │   ├── models
 │   │   ├── __init__.py
 │   │   └── ia_model.py
+│   ├── static
+│   │   ├── js
+│   │   │   ├── joueur1.js
+│   │   │   ├── joueur2.js
+│   │   │   └── login.js
+│   │   └── style.css
+│   ├── templates
+│   │   ├── index.html
+│   │   ├── joueur1.html
+│   │   └── joueur2.html
 │   └── utils
 │       ├── __init__.py
 │       └── loader.py
@@ -20,16 +30,6 @@ projet-environnement
 │   ├── knn_model.joblib
 │   ├── mapping_codes.csv
 │   └── pipelines_ru.csv
-├── dev_front
-│   ├── apphosting.yaml
-│   ├── components.json
-│   ├── infra.tf
-│   ├── next.config.ts
-│   ├── package-lock.json
-│   ├── package.json
-│   ├── postcss.config.mjs
-│   ├── tailwind.config.ts
-│   └── tsconfig.json
 ├── etapes
 │   ├── __init__.py
 │   ├── amelioration.md
@@ -40,8 +40,6 @@ projet-environnement
 │   ├── etapes_5.md
 │   ├── etapes_6.md
 │   └── etapes_7.md
-├── front_clas
-│   └── flask.py
 ├── instalation.sh
 ├── lancement
 │   └── commande.txt

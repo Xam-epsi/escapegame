@@ -1,2 +1,4 @@
 python generate_tree.py
 
+uvicorn backend.main:app --reload
+
