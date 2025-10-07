@@ -4,11 +4,9 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.joblib
 
 # === Données ===
 données/
-*.csv
 *.log
 
 # === Environnements ===

@@ -15,7 +15,7 @@ projet-environnement
 │   └── utils
 │       ├── __init__.py
 │       └── loader.py
-├── données
+├── data
 │   ├── __init__.py
 │   ├── mapping_codes.csv
 │   ├── pipelines_ru.csv
@@ -30,6 +30,7 @@ projet-environnement
 │   ├── etapes_5.md
 │   ├── etapes_6.md
 │   └── etapes_7.md
+├── infra.tf
 ├── instalation.sh
 ├── lancement
 │   └── commande.txt
