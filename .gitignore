@@ -1,22 +1,45 @@
-# === Python ===
-venv/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# === Données ===
-données/
-*.log
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
-# === Environnements ===
-.env
-*.env
+# testing
+/coverage
 
-# === OS / IDE ===
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
 .DS_Store
-.idea/
-.vscode/
+*.pem
 
-# === Node (si un jour tu ajoutes un front) ===
-node_modules/
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+.genkit/*
+.env*
+
+# firebase
+firebase-debug.log
+firestore-debug.log
