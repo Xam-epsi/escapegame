@@ -25,9 +25,19 @@ from backend.utils.loader import load_mapping_codes
 app = FastAPI(title="Pipeline Rescue Backend")
 
 BASE_DIR = os.path.dirname(__file__)
-app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
-templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
+# 🟢 Nouveau chemin vers le frontend
+FRONTEND_DIR = os.path.join(BASE_DIR, "..", "frontend")
+
+# On monte le dossier "frontend/static"
+app.mount("/static", StaticFiles(directory=os.path.join(FRONTEND_DIR, "static")), name="static")
+
+# Et on indique à Jinja2 où trouver les templates
+templates = Jinja2Templates(directory=os.path.join(FRONTEND_DIR, "templates"))
+
+# ======================================================
+# MIDDLEWARE
+# ======================================================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -35,6 +45,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # ======================================================
 # VARIABLES GLOBALES
