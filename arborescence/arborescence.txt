@@ -11,7 +11,8 @@ projet-environnement
 │   ├── main.py
 │   ├── models
 │   │   ├── __init__.py
-│   │   └── ia_model.py
+│   │   ├── ia_model.py
+│   │   └── train_ia.py
 │   ├── static
 │   │   ├── js
 │   │   │   ├── joueur1.js

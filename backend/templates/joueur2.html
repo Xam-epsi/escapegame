@@ -9,65 +9,36 @@
 <body class="page">
   <header class="topbar">
     <h2>Agent B — Console IA</h2>
-    <a class="back" href="/">↩ Quitter</a>
+    <div class="top-actions">
+      <span id="timer" class="alarm">30:00</span>
+      <a class="back" href="/">↩ Quitter</a>
+    </div>
   </header>
 
   <main class="card">
-    <p>
-      Vous contrôlez l’IA prédictive.  
-      Votre mission : estimer quels pipelines présentent le plus grand risque et aider l’Agent A à trouver celui à couper.
-    </p>
+    <p>Entrez les informations d’une ligne pour obtenir le score IA ; ensuite transmettez ce score à l’Agent A.</p>
 
     <form id="predictForm" class="form">
-      <label>Latitude</label>
-      <input id="lat" type="number" step="any" required placeholder="ex: 55.75" />
-
-      <label>Longitude</label>
-      <input id="lon" type="number" step="any" required placeholder="ex: 37.61" />
-
-      <label>Capacité du pipeline</label>
-      <input id="capacity" type="number" step="any" required placeholder="ex: 1200" />
-
-      <label>Opérateur</label>
-      <input id="operator" required placeholder="ex: Rosneft" />
-
-      <label>Année de construction</label>
-      <input id="year" type="number" required placeholder="ex: 1998" />
-
-      <div class="actions">
-        <button id="predictBtn">🔎 Lancer l’analyse IA</button>
-      </div>
+      <label>Latitude</label><input id="lat" type="number" step="any" required />
+      <label>Longitude</label><input id="lon" type="number" step="any" required />
+      <label>Capacité</label><input id="capacity" type="number" step="any" required />
+      <label>Année</label><input id="year" type="number" required />
+      <div class="actions"><button>🔎 Calculer le score</button></div>
     </form>
 
-    <div id="predictError" class="error"></div>
     <div id="predictResults" class="result mono"></div>
 
     <hr/>
 
-    <section>
-      <h3>⚙️ Validation finale</h3>
-      <p>
-        L’IA a identifié le pipeline le plus risqué.  
-        Transmettez le <strong>nom du pipeline</strong> et entrez vos deux codes d’arrêt ensemble pour éviter l’explosion.
-      </p>
+    <h3>Validation finale (Agent B)</h3>
+    <p>Après que l'Agent A a validé le tableau, entrez ici le <strong>site_code</strong> et le <strong>code secret</strong> reçus.</p>
 
-      <div class="form small">
-        <label>Pipeline détecté</label>
-        <input id="finalSite" />
-
-        <label>Code Agent A</label>
-        <input id="finalA" />
-
-        <label>Code Agent B</label>
-        <input id="finalB" />
-
-        <div class="actions">
-          <button id="submitFinalBtn">🚨 Activer la coupure</button>
-        </div>
-      </div>
-
+    <div class="form small">
+      <label>Pipeline détecté (site_code)</label><input id="finalSite" />
+      <label>Code secret</label><input id="finalCode" />
+      <div class="actions"><button id="submitFinalBtn">🚨 Activer la coupure</button></div>
       <div id="finalResponse" class="result"></div>
-    </section>
+    </div>
   </main>
 
   <script src="/static/js/joueur2.js"></script>

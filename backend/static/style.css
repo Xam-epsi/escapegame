@@ -193,4 +193,3 @@ button:active{transform:translateY(1px)}
   100%{opacity:1}
 }
 .alarmPulse{ animation: pulse 1.4s ease-in-out; }
-

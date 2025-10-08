@@ -1,187 +1,80 @@
-// joueur1.js — Agent A (compte à rebours, barre, beeps, alarm)
-// Assure-toi que ce fichier est accessible sous /static/js/joueur1.js
-
 document.addEventListener('DOMContentLoaded', () => {
-  // Elements
   const timerEl = document.getElementById('timer');
   const progressBar = document.getElementById('progressBar');
-  const loadFullBtn = document.getElementById('loadFull');
   const csvContainer = document.getElementById('csvContainer');
   const csvStatus = document.getElementById('csvStatus');
-  const siteInput = document.getElementById('siteInput');
-  const codeA = document.getElementById('codeA');
-  const codeB = document.getElementById('codeB');
-  const finalBtn = document.getElementById('finalBtn');
+  const validateBtn = document.getElementById('validateTableBtn');
+  const pipelineInfo = document.getElementById('pipelineInfo');
+  const pipelineCodeEl = document.getElementById('pipelineCode');
+  const secretCodeEl = document.getElementById('secretCode');
   const finalResult = document.getElementById('finalResult');
 
-  // Configuration
-  const TOTAL_SECONDS = 5 * 60; // 5 minutes
-  let timeLeft = TOTAL_SECONDS;
-  let timerInterval = null;
-  let beepInterval = null;
-  let alarmPlaying = false;
-  let audioCtx = null;
+  const TOTAL_DURATION = 30 * 60; // 30 minutes
 
-  // Start countdown immediately when page loads
-  startTimer();
+  // démarrer timer partagé
+  let timerInterval = setInterval(updateTimer, 1000);
+  updateTimer();
 
-  // Start beep schedule (every 30s)
-  const BEEP_PERIOD = 30; // seconds
-  scheduleBeeps();
-
-  // Event listeners
-  loadFullBtn.addEventListener('click', () => fetchCSV({ 'X-Auth-A': '1' }));
-  finalBtn.addEventListener('click', onFinalClick);
-
-  // Disable fields helper
-  function setDisabledAll(state = true) {
-    [loadFullBtn, siteInput, codeA, codeB, finalBtn].forEach(el => { if (el) el.disabled = state; });
-    const inputs = csvContainer.querySelectorAll('input');
-    inputs.forEach(i => i.disabled = state);
-  }
-
-  // Timer logic
-  function startTimer() {
-    updateTimerDisplay();
-    timerInterval = setInterval(() => {
-      timeLeft--;
-      updateTimerDisplay();
+  async function updateTimer() {
+    try {
+      const res = await fetch('/timer');
+      const data = await res.json();
+      const timeLeft = data.remaining;
+      const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+      const s = String(timeLeft % 60).padStart(2, '0');
+      timerEl.textContent = `${m}:${s}`;
+      if (progressBar) progressBar.style.width = `${((TOTAL_DURATION - timeLeft) / TOTAL_DURATION) * 100}%`;
       if (timeLeft <= 0) {
         clearInterval(timerInterval);
-        onTimeExpired();
+        finalResult.className = 'error';
+        finalResult.textContent = '💥 Temps écoulé ! Explosion virtuelle !';
+        disableInputs(true);
       }
-    }, 1000);
-  }
-
-  function updateTimerDisplay() {
-    const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
-    const s = String(timeLeft % 60).padStart(2, '0');
-    timerEl.textContent = `${m}:${s}`;
-    // update progress bar (fills from 0 -> 100 as time elapses)
-    const progress = ((TOTAL_SECONDS - timeLeft) / TOTAL_SECONDS) * 100;
-    progressBar.style.width = `${progress}%`;
-  }
-
-  function onTimeExpired() {
-    finalResult.className = 'error';
-    finalResult.textContent = '💥 Temps écoulé ! Explosion virtuelle !';
-    setDisabledAll(true);
-    playAlarm();
-  }
-
-  // ---------------------
-  // Audio: beep & alarm using WebAudio (no external files)
-  // ---------------------
-  function ensureAudioCtx() {
-    if (!audioCtx) {
-      try {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      } catch (e) {
-        console.warn("Audio non supporté:", e);
-      }
+    } catch (e) {
+      console.error('Erreur timer:', e);
     }
-    return audioCtx;
   }
 
-  function blinkTimerOnce() {
-    timerEl.classList.add('blink');
-    setTimeout(() => timerEl.classList.remove('blink'), 900);
+  function disableInputs(state) {
+    csvContainer.querySelectorAll('input').forEach(i => i.disabled = state);
+    validateBtn.disabled = state;
   }
 
-  function playBeep() {
-    const ctx = ensureAudioCtx();
-    if (!ctx) return;
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.frequency.value = 880; // A5
-    o.type = 'sine';
-    g.gain.value = 0.0001;
-    o.connect(g);
-    g.connect(ctx.destination);
-    const now = ctx.currentTime;
-    g.gain.cancelScheduledValues(now);
-    g.gain.setValueAtTime(0.0001, now);
-    g.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
-    o.start(now);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
-    o.stop(now + 0.2);
-    blinkTimerOnce();
-  }
-
-  function playAlarm() {
-    if (alarmPlaying) return;
-    const ctx = ensureAudioCtx();
-    if (!ctx) return;
-    alarmPlaying = true;
-    // long intense tone sequence
-    const duration = 3.5;
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = 'sawtooth';
-    o.frequency.setValueAtTime(220, ctx.currentTime);
-    g.gain.value = 0.0001;
-    o.connect(g); g.connect(ctx.destination);
-    const now = ctx.currentTime;
-    g.gain.exponentialRampToValueAtTime(0.12, now + 0.02);
-    o.start(now);
-    // frequency sweep
-    o.frequency.linearRampToValueAtTime(880, now + duration);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + duration + 0.02);
-    o.stop(now + duration + 0.05);
-    // visual alarm pulse
-    timerEl.classList.add('alarmPulse');
-    setTimeout(() => { timerEl.classList.remove('alarmPulse'); }, (duration + 0.1) * 1000);
-  }
-
-  function scheduleBeeps() {
-    // Immediate beep at load is optional; we beep at every 30s interval aligned to remaining time
-    // Compute time to next multiple of BEEP_PERIOD
-    const mod = timeLeft % BEEP_PERIOD;
-    const firstDelay = mod === 0 ? 0 : (mod);
-    // We'll start an interval that checks every second; when timeLeft % 30 === 0 -> beep
-    beepInterval = setInterval(() => {
-      if (timeLeft > 0 && timeLeft % BEEP_PERIOD === 0) {
-        playBeep();
-      }
-    }, 900);
-  }
-
-  // ---------------------
-  // CSV loading and rendering (simple, clean)
-  // ---------------------
-  async function fetchCSV(authHeader) {
+  // CHARGER LE CSV
+  async function loadCSV() {
     csvStatus.textContent = 'Chargement des données...';
-    csvContainer.innerHTML = '';
     try {
-      const res = await fetch('/country/RU', { headers: authHeader });
-      if (!res.ok) throw new Error(`Erreur ${res.status}`);
+      const res = await fetch('/country/RU', { headers: { 'X-Auth-A': '1' } });
+      if (!res.ok) throw new Error(res.statusText);
       const text = await res.text();
-      renderSimpleTable(text);
-      csvStatus.textContent = 'Données chargées (version complète).';
-    } catch (err) {
-      csvStatus.textContent = `Erreur : ${err.message}`;
+      renderTable(text);
+      csvStatus.textContent = 'Données chargées.';
+    } catch (e) {
+      csvStatus.textContent = `Erreur : ${e.message}`;
     }
   }
 
-  function renderSimpleTable(csvText) {
-    // Parse CSV - simple splitting by comma (synthetic data)
-    const lines = csvText.trim().split(/\r?\n/).filter(l => l.trim().length);
-    if (lines.length === 0) {
+  function renderTable(csvText) {
+    const lines = csvText.trim().split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) {
       csvContainer.innerHTML = '<div class="muted">Aucune donnée.</div>';
       return;
     }
-    const headers = splitCsvLine(lines[0]);
-    // Ensure we show only a few important columns for clarity (id/site_code, operator, capacity, year)
-    // fallback to showing all if those not present
-    const wanted = ['site_code', 'id', 'operator', 'capacity', 'year', 'lat', 'lon'];
-    const headerMap = headers.reduce((acc, h, i) => { acc[h.trim()] = i; return acc; }, {});
-    const useHeaders = headers.filter(h => wanted.includes(h) ).length ? headers.filter(h => wanted.includes(h)) : headers;
-    // Build table
+    const headers = lines[0].split(';').map(h => h.trim());
+    const headerMap = {};
+    headers.forEach((h, i) => headerMap[h.toLowerCase()] = i);
+
+    const skipPred = h => {
+      const lh = h.toLowerCase();
+      return lh.includes('notes') || lh.includes('confidence_score') || lh.includes('is_sabot') || lh.includes('anonym');
+    };
+    const displayHeaders = headers.filter(h => !skipPred(h));
+
     const table = document.createElement('table');
     table.className = 'csv-table';
     const thead = document.createElement('thead');
     const trh = document.createElement('tr');
-    useHeaders.forEach(h => {
+    displayHeaders.forEach(h => {
       const th = document.createElement('th'); th.textContent = h; trh.appendChild(th);
     });
     const thScore = document.createElement('th'); thScore.textContent = 'Confiance (%)'; trh.appendChild(thScore);
@@ -189,22 +82,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const tbody = document.createElement('tbody');
     lines.slice(1).forEach(line => {
-      const cols = splitCsvLine(line);
+      const cols = line.split(';');
       const tr = document.createElement('tr');
-      useHeaders.forEach(h => {
+      const siteCodeIdx = headerMap['site_code'] ?? headerMap['site'] ?? headerMap['sitecode'] ?? null;
+      if (siteCodeIdx !== null) tr.dataset.siteCode = (cols[siteCodeIdx] || '').trim();
+
+      displayHeaders.forEach(h => {
+        const idx = headerMap[h.toLowerCase()];
         const td = document.createElement('td');
-        const idx = headerMap[h];
         td.textContent = typeof idx === 'number' ? (cols[idx] || '') : '';
         tr.appendChild(td);
       });
       const tdScore = document.createElement('td');
       const inp = document.createElement('input');
-      inp.type = 'number';
-      inp.min = 0; inp.max = 100; inp.placeholder = '—';
-      // small styling
-      inp.style.width = '80px';
-      tdScore.appendChild(inp);
-      tr.appendChild(tdScore);
+      inp.type = 'number'; inp.min = 0; inp.max = 100; inp.placeholder = '—';
+      tdScore.appendChild(inp); tr.appendChild(tdScore);
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
@@ -212,63 +104,67 @@ document.addEventListener('DOMContentLoaded', () => {
     csvContainer.appendChild(table);
   }
 
-  function splitCsvLine(line) {
-    // naive split: first try comma, else semicolon
-    if (line.includes(';')) return line.split(';').map(s => s.trim());
-    return line.split(',').map(s => s.trim());
+  function allScoresFilled() {
+    const inputs = csvContainer.querySelectorAll('tbody input');
+    return Array.from(inputs).every(i => i.value.trim() !== '');
   }
 
-  // ---------------------
-  // Final submit (POST /final)
-  // ---------------------
-  async function onFinalClick(e) {
-    e.preventDefault();
+  // Validation du tableau — maintenant gère l'erreur + pénalité
+  validateBtn.addEventListener('click', async () => {
     finalResult.textContent = '';
-    const site_code = (siteInput.value || '').trim();
-    const a = (codeA.value || '').trim();
-    const b = (codeB.value || '').trim();
-
-    if (!site_code || !a || !b) {
+    if (!allScoresFilled()) {
       finalResult.className = 'error';
-      finalResult.textContent = 'Veuillez renseigner le pipeline et les deux codes.';
+      finalResult.textContent = 'Remplissez toutes les cases "Confiance (%)" avant de valider.';
       return;
     }
 
-    // Send request
+    const rows = Array.from(csvContainer.querySelectorAll('tbody tr'));
+    const scores = rows.map(r => {
+      const site = r.dataset.siteCode || r.cells[0].textContent.trim();
+      const input = r.querySelector('input');
+      return { site_code: site, score: parseFloat(input.value) };
+    });
+
     try {
-      const res = await fetch('/final', {
+      const res = await fetch('/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ site_code, code_a: a, code_b: b })
+        body: JSON.stringify({ scores })
       });
       const data = await res.json();
+
       if (!res.ok) {
-        finalResult.className = 'error';
-        finalResult.textContent = data.detail || JSON.stringify(data);
+        // data.detail contient soit une chaîne soit un objet {message, penalty, remaining}
+        const detail = data.detail ?? data;
+        if (typeof detail === 'object' && detail !== null) {
+          const message = detail.message || JSON.stringify(detail);
+          const penalty = detail.penalty ?? 0;
+          const remaining = detail.remaining ?? null;
+          finalResult.className = 'error';
+          finalResult.textContent = message + (penalty ? `\nTemps réduit de ${Math.round(penalty/60)} minute(s).` : '');
+          // forcer un rafraîchissement immédiat du timer
+          updateTimer();
+        } else {
+          finalResult.className = 'error';
+          finalResult.textContent = String(detail);
+        }
         return;
       }
-      finalResult.className = data.result === 'success' ? 'success' : 'error';
-      finalResult.textContent = data.message || JSON.stringify(data);
-      if (data.result === 'success') {
-        // success: stop timers, stop beeps
-        clearInterval(timerInterval);
-        clearInterval(beepInterval);
-        setDisabledAll(true);
-        playBeep(); // little success beep
-      } else {
-        // failure: small alarm pulse
-        playBeep();
-      }
-    } catch (err) {
-      finalResult.className = 'error';
-      finalResult.textContent = 'Erreur réseau : ' + err.message;
-    }
-  }
 
-  // Clean up on page hide/unload
-  window.addEventListener('beforeunload', () => {
-    clearInterval(timerInterval);
-    clearInterval(beepInterval);
+      // succès : afficher pipeline et code
+      pipelineCodeEl.textContent = data.detected_site;
+      secretCodeEl.textContent = data.code_secret;
+      pipelineInfo.style.display = 'block';
+      finalResult.className = 'success';
+      finalResult.textContent = `Tableau validé — pipeline détecté : ${data.detected_site}`;
+      disableInputs(true);
+    } catch (e) {
+      finalResult.className = 'error';
+      finalResult.textContent = 'Erreur validation : ' + e.message;
+      console.error(e);
+    }
   });
 
+  // initial load
+  loadCSV();
 });

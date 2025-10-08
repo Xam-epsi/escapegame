@@ -22,42 +22,29 @@
 
   <main class="card">
     <p class="lead">
-      Mission : identifier le pipeline saboté et entrer le code d’arrêt avant la fin du compte à rebours.
-      Vous voyez les données complètes ; notez votre **confiance** (%) à côté de chaque ligne.
-      Seul l'Agent A saisira les codes de coupure à la fin.
+      Mission : identifier le pipeline saboté et entrer le code d’arrêt avant la fin du compte à rebours.<br>
+      Remplissez la colonne <strong>Confiance (%)</strong> avec l'aide de l'Agent B.
     </p>
 
-    <div class="btn-row">
-      <button id="loadFull" class="secondary">📡 Charger les données (RU — complet)</button>
-    </div>
-
+    <div id="csvContainer" class="table-wrap"></div>
     <p id="csvStatus" class="muted">Données non chargées.</p>
 
-    <div id="csvContainer" class="table-wrap" aria-live="polite" aria-label="Données pipelines"></div>
+    <div class="actions">
+      <button id="validateTableBtn">✅ Valider le tableau</button>
+    </div>
 
-    <div class="mission">
-      <h3>Étape finale</h3>
-      <p class="muted">
-        Si vous avez identifié le pipeline à couper, entrez son nom exact (colonne <em>id</em> ou <em>site_code</em>) puis les deux codes d'arrêt.
-        Seul l'Agent A doit les saisir ici.
-      </p>
+    <div id="pipelineInfo" style="display:none;">
+      <p>Pipeline suspect : <span id="pipelineCode"></span></p>
+      <p>Code secret : <span id="secretCode"></span></p>
 
-      <div class="form small">
-        <label for="siteInput">Pipeline suspect (site_code)</label>
-        <input id="siteInput" placeholder="ex : RU-Pipeline-03" />
+      <label for="siteInput">Pipeline suspect (site_code)</label>
+      <input id="siteInput" disabled />
 
-        <label for="codeA">Code Agent A</label>
-        <input id="codeA" placeholder="----" />
+      <label for="codeSecret">Code secret</label>
+      <input id="codeSecret" disabled />
 
-        <label for="codeB">Code Agent B</label>
-        <input id="codeB" placeholder="----" />
-
-        <div class="actions">
-          <button id="finalBtn">🚨 Couper le pipeline</button>
-        </div>
-
-        <div id="finalResult" class="result" aria-live="polite"></div>
-      </div>
+      <button id="finalBtn" disabled>🚨 Valider le pipeline</button>
+      <div id="finalResult"></div>
     </div>
   </main>
 
