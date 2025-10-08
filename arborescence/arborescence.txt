@@ -12,25 +12,37 @@ projet-environnement
 │   ├── models
 │   │   ├── __init__.py
 │   │   ├── ia_model.py
+│   │   ├── image_ia.py
 │   │   └── train_ia.py
 │   ├── static
+│   │   ├── img
+│   │   │   ├── australie.jpg
+│   │   │   ├── chine.jpg
+│   │   │   ├── inde.jpg
+│   │   │   └── russie.jpg
 │   │   ├── js
 │   │   │   ├── joueur1.js
 │   │   │   ├── joueur2.js
-│   │   │   └── login.js
+│   │   │   ├── login.js
+│   │   │   └── select_country.js
 │   │   └── style.css
 │   ├── templates
 │   │   ├── index.html
 │   │   ├── joueur1.html
-│   │   └── joueur2.html
+│   │   ├── joueur2.html
+│   │   └── select_country.html
 │   └── utils
 │       ├── __init__.py
 │       └── loader.py
 ├── data
 │   ├── __init__.py
 │   ├── knn_model.joblib
+│   ├── knn_regressor_model.joblib
 │   ├── mapping_codes.csv
-│   └── pipelines_ru.csv
+│   ├── pipelines_ru.csv
+│   ├── poutine_bears.png
+│   ├── process_saved_scores.py
+│   └── saved_scores.csv
 ├── etapes
 │   ├── __init__.py
 │   ├── amelioration.md
@@ -41,10 +53,10 @@ projet-environnement
 │   ├── etapes_5.md
 │   ├── etapes_6.md
 │   └── etapes_7.md
-├── instalation.sh
 ├── lancement
 │   └── commande.txt
 ├── requirements.txt
+├── setup.sh
 ├── tests
 │   ├── __init__.py
 │   ├── test_api_routes.py

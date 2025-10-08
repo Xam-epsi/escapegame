@@ -1,13 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('predictForm');
-  const resultsEl = document.getElementById('predictResults');
   const timerEl = document.getElementById('timer');
-  const finalSite = document.getElementById('finalSite');
-  const finalCode = document.getElementById('finalCode');
-  const submitFinalBtn = document.getElementById('submitFinalBtn');
-  const finalResponse = document.getElementById('finalResponse');
+  const predictForm = document.getElementById('predictForm');
+  const predictResults = document.getElementById('predictResults');
+  const finalBtn = document.getElementById('submitFinalBtn');
+  const finalResp = document.getElementById('finalResponse');
+  const siteInput = document.getElementById('finalSite');
+  const codeInput = document.getElementById('finalCode');
 
-  const TOTAL_DURATION = 30 * 60;
   let timerInterval = setInterval(updateTimer, 1000);
   updateTimer();
 
@@ -21,46 +20,49 @@ document.addEventListener('DOMContentLoaded', () => {
       timerEl.textContent = `${m}:${s}`;
       if (timeLeft <= 0) {
         clearInterval(timerInterval);
-        resultsEl.textContent = '💥 Le temps est écoulé.';
+        alert('💥 Temps écoulé ! Explosion virtuelle !');
       }
-    } catch (e) {
-      console.error('Erreur timer:', e);
+    } catch (err) {
+      console.error('Erreur timer:', err);
     }
   }
 
-  form.addEventListener('submit', async (e) => {
+  predictForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    resultsEl.textContent = 'Analyse en cours...';
-    const payload = {
-      lat: parseFloat(document.getElementById('lat').value),
-      lon: parseFloat(document.getElementById('lon').value),
-      capacity: parseFloat(document.getElementById('capacity').value),
-      year: parseInt(document.getElementById('year').value, 10)
-    };
+    predictResults.textContent = '⏳ Calcul en cours...';
+    const lat = parseFloat(document.getElementById('lat').value);
+    const lon = parseFloat(document.getElementById('lon').value);
+    const capacity = parseFloat(document.getElementById('capacity').value);
+    const year = parseInt(document.getElementById('year').value);
+
     try {
       const res = await fetch('/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ lat, lon, capacity, year })
       });
+      if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || res.statusText);
-      resultsEl.innerHTML = `<strong>Score de confiance :</strong> ${data.score}`;
+      const pct = Math.round(data.score * 100);
+      predictResults.textContent = `Score de confiance IA : ${pct}%`;
+      predictResults.className = 'mt-4 p-3 text-center font-mono bg-gray-800/80 rounded-lg border border-gray-700 text-green-400';
     } catch (err) {
-      resultsEl.textContent = 'Erreur : ' + err.message;
+      predictResults.textContent = 'Erreur : ' + err.message;
+      predictResults.className = 'mt-4 p-3 text-center font-mono bg-gray-800/80 rounded-lg border border-gray-700 text-red-400';
     }
   });
 
-  submitFinalBtn.addEventListener('click', async (e) => {
-    e.preventDefault();
-    finalResponse.textContent = '';
-    const site = finalSite.value.trim();
-    const code = finalCode.value.trim();
+  finalBtn.addEventListener('click', async () => {
+    finalResp.textContent = '';
+    const site = siteInput.value.trim();
+    const code = codeInput.value.trim();
+
     if (!site || !code) {
-      finalResponse.className = 'error';
-      finalResponse.textContent = 'Remplissez site_code et code secret.';
+      finalResp.textContent = 'Veuillez renseigner le pipeline et le code secret.';
+      finalResp.className = 'text-yellow-400 font-semibold';
       return;
     }
+
     try {
       const res = await fetch('/final', {
         method: 'POST',
@@ -68,12 +70,16 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({ site_code: site, code_a: code })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || res.statusText);
-      finalResponse.className = data.result === 'success' ? 'success' : 'error';
-      finalResponse.textContent = data.message;
+      if (data.result === 'success') {
+        finalResp.textContent = data.message;
+        finalResp.className = 'text-green-400 font-bold';
+      } else {
+        finalResp.textContent = data.message;
+        finalResp.className = 'text-red-400 font-bold';
+      }
     } catch (err) {
-      finalResponse.className = 'error';
-      finalResponse.textContent = 'Erreur : ' + err.message;
+      finalResp.textContent = 'Erreur de communication : ' + err.message;
+      finalResp.className = 'text-red-400 font-bold';
     }
   });
 });

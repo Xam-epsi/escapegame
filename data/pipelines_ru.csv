@@ -4,3 +4,4 @@ id;site_code;name;country;lat;lon;capacity;operator;year;notes;confidence_score;
 3;RU-0003;North Star;RU;61.5;30.5;38000;GazTrans;2005;Synthetic - anonymized;;1
 4;RU-0004;Kola Bay;RU;67.1234;32.1;25000;ArcticCo;2010;Synthetic - anonymized;;0
 5;RU-0005;Volga East;RU;54.321;49.123;30000;VolgaPetro;1995;Synthetic - anonymized;;0
+5;RU-0005;Volga East;RU;54.321;49.123;30000;VolgaPetro;1995;Synthetic - anonymized;

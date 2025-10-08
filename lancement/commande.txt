@@ -2,3 +2,5 @@ python generate_tree.py
 
 uvicorn backend.main:app --reload
 
+chmod +x setup.sh
+./setup.sh

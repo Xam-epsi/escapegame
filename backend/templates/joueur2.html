@@ -3,44 +3,64 @@
 <head>
   <meta charset="utf-8" />
   <title>Agent B — Console IA</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="/static/style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="page">
-  <header class="topbar">
-    <h2>Agent B — Console IA</h2>
-    <div class="top-actions">
-      <span id="timer" class="alarm">30:00</span>
-      <a class="back" href="/">↩ Quitter</a>
+
+<body class="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
+  <header class="flex justify-between items-center bg-gray-900 px-6 py-3 border-b border-gray-700">
+    <h1 class="text-xl font-bold text-blue-400">🤖 Agent B — Console IA</h1>
+    <div class="flex items-center gap-4">
+      <div id="timer" class="font-mono text-lg text-amber-400">30:00</div>
+      <a href="/" class="text-red-400 hover:text-red-300">↩ Quitter</a>
     </div>
   </header>
 
-  <main class="card">
-    <p>Entrez les informations d’une ligne pour obtenir le score IA ; ensuite transmettez ce score à l’Agent A.</p>
+  <main class="flex-1 p-6 flex flex-col items-center">
+    <div class="w-full max-w-2xl bg-gray-900/70 p-6 rounded-2xl shadow-lg border border-gray-700">
+      <h2 class="text-lg font-semibold text-blue-300 mb-4">💡 Calcul du score IA</h2>
+      <p class="text-sm mb-4 text-gray-400">
+        Entrez les infos d’un pipeline pour obtenir le score IA et transmettre à l’Agent A.
+      </p>
 
-    <form id="predictForm" class="form">
-      <label>Latitude</label><input id="lat" type="number" step="any" required />
-      <label>Longitude</label><input id="lon" type="number" step="any" required />
-      <label>Capacité</label><input id="capacity" type="number" step="any" required />
-      <label>Année</label><input id="year" type="number" required />
-      <div class="actions"><button>🔎 Calculer le score</button></div>
-    </form>
+      <div class="flex justify-center mb-4">
+        <img src="/puzzle/image" alt="IA Engine" class="w-40 h-40 opacity-90" />
+      </div>
 
-    <div id="predictResults" class="result mono"></div>
+      <form id="predictForm" class="grid grid-cols-2 gap-3">
+        <div><label class="text-gray-300 text-sm">Latitude</label><input id="lat" type="number" step="any" required class="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-2 focus:ring-blue-400" /></div>
+        <div><label class="text-gray-300 text-sm">Longitude</label><input id="lon" type="number" step="any" required class="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-2 focus:ring-blue-400" /></div>
+        <div><label class="text-gray-300 text-sm">Capacité</label><input id="capacity" type="number" step="any" required class="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-2 focus:ring-blue-400" /></div>
+        <div><label class="text-gray-300 text-sm">Année</label><input id="year" type="number" required class="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-2 focus:ring-blue-400" /></div>
+        <div class="col-span-2 flex justify-center mt-3">
+          <button class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg shadow">🔎 Calculer le score</button>
+        </div>
+      </form>
 
-    <hr/>
+      <div id="predictResults" class="mt-4 p-3 text-center font-mono bg-gray-800/80 rounded-lg border border-gray-700 text-blue-300">
+        ⏳ En attente de calcul…
+      </div>
+    </div>
 
-    <h3>Validation finale (Agent B)</h3>
-    <p>Après que l'Agent A a validé le tableau, entrez ici le <strong>site_code</strong> et le <strong>code secret</strong> reçus.</p>
+    <div class="w-full max-w-2xl bg-gray-900/70 p-6 rounded-2xl shadow-lg border border-gray-700 mt-8">
+      <h3 class="text-lg font-semibold text-red-400 mb-3">🚨 Validation finale</h3>
+      <p class="text-sm text-gray-400 mb-4">
+        Après que l’Agent A a validé son tableau, entrez le <strong>site_code</strong> et le <strong>code secret</strong>.
+      </p>
 
-    <div class="form small">
-      <label>Pipeline détecté (site_code)</label><input id="finalSite" />
-      <label>Code secret</label><input id="finalCode" />
-      <div class="actions"><button id="submitFinalBtn">🚨 Activer la coupure</button></div>
-      <div id="finalResponse" class="result"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-gray-300 text-sm">Pipeline (site_code)</label><input id="finalSite" class="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-2 focus:ring-red-400" /></div>
+        <div><label class="text-gray-300 text-sm">Code secret</label><input id="finalCode" class="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-2 focus:ring-red-400" /></div>
+        <div class="col-span-2 flex justify-center mt-3">
+          <button id="submitFinalBtn" class="bg-red-600 hover:bg-red-500 text-white px-5 py-2 rounded-lg shadow">🧩 Activer la coupure</button>
+        </div>
+      </div>
+
+      <div id="finalResponse" class="mt-4 p-3 text-center font-semibold bg-gray-800/80 rounded-lg border border-gray-700"></div>
     </div>
   </main>
 
+  <!-- Script JS corrigé -->
   <script src="/static/js/joueur2.js"></script>
 </body>
 </html>
