@@ -8,29 +8,17 @@ projet-environnement
 │   └── generate_tree.py
 ├── backend
 │   ├── __init__.py
+│   ├── globals.py
 │   ├── main.py
 │   ├── models
 │   │   ├── __init__.py
 │   │   ├── ia_model.py
 │   │   ├── image_ia.py
 │   │   └── train_ia.py
-│   ├── static
-│   │   ├── img
-│   │   │   ├── australie.jpg
-│   │   │   ├── chine.jpg
-│   │   │   ├── inde.jpg
-│   │   │   └── russie.jpg
-│   │   ├── js
-│   │   │   ├── joueur1.js
-│   │   │   ├── joueur2.js
-│   │   │   ├── login.js
-│   │   │   └── select_country.js
-│   │   └── style.css
-│   ├── templates
-│   │   ├── index.html
-│   │   ├── joueur1.html
-│   │   ├── joueur2.html
-│   │   └── select_country.html
+│   ├── routes
+│   │   ├── __init__.py
+│   │   ├── backend_routes.py
+│   │   └── frontend_routes.py
 │   └── utils
 │       ├── __init__.py
 │       └── loader.py
@@ -43,16 +31,24 @@ projet-environnement
 │   ├── poutine_bears.png
 │   ├── process_saved_scores.py
 │   └── saved_scores.csv
-├── etapes
-│   ├── __init__.py
-│   ├── amelioration.md
-│   ├── etapes_1.md
-│   ├── etapes_2.md
-│   ├── etapes_3.md
-│   ├── etapes_4.md
-│   ├── etapes_5.md
-│   ├── etapes_6.md
-│   └── etapes_7.md
+├── frontend
+│   ├── static
+│   │   ├── img
+│   │   │   ├── australie.jpg
+│   │   │   ├── chine.jpg
+│   │   │   ├── inde.jpg
+│   │   │   └── russie.jpg
+│   │   ├── js
+│   │   │   ├── joueur1.js
+│   │   │   ├── joueur2.js
+│   │   │   ├── login.js
+│   │   │   └── select_country.js
+│   │   └── style.css
+│   └── templates
+│       ├── joueur1.html
+│       ├── joueur2.html
+│       ├── login.html
+│       └── select_country.html
 ├── lancement
 │   └── commande.txt
 ├── requirements.txt
