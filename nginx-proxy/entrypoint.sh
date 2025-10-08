@@ -7,7 +7,8 @@ if [ ! -f /etc/nginx/certs/fullchain.pem ] || [ ! -f /etc/nginx/certs/privkey.pe
         -newkey rsa:2048 \
         -keyout /etc/nginx/certs/privkey.pem \
         -out /etc/nginx/certs/fullchain.pem \
-        -subj "/C=./ST=./L=./O=./CN=."
+        -subj "/C=FR/ST=IDF/L=Paris/O=Dev/CN=localhost"
+
 fi
 
 # Lancer Nginx
