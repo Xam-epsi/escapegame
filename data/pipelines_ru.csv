@@ -1,13 +1,7 @@
-id;site_code;name;country;lat;lon;capacity;operator;year;notes;confidence_score
-1;RU-0001;Northeast Platform;RU;61.2345;30.1234;50000;GazTrans;1998;Synthetic - anonymized;
-2;RU-0002;Baltic Ring;RU;60.9876;29.9876;42000;RosOil;2002;Synthetic - anonymized;
-3;RU-0003;North Star;RU;61.5;30.5;38000;GazTrans;2005;Synthetic - anonymized;
-4;RU-0004;Kola Bay;RU;67.1234;32.1;25000;ArcticCo;2010;Synthetic - anonymized;
+id;site_code;name;country;lat;lon;capacity;operator;year;notes;confidence_score;is_sabotaged
+1;RU-0001;Northeast Platform;RU;61.2345;30.1234;50000;GazTrans;1998;Synthetic - anonymized;;0
+2;RU-0002;Baltic Ring;RU;60.9876;29.9876;42000;RosOil;2002;Synthetic - anonymized;;0
+3;RU-0003;North Star;RU;61.5;30.5;38000;GazTrans;2005;Synthetic - anonymized;;1
+4;RU-0004;Kola Bay;RU;67.1234;32.1;25000;ArcticCo;2010;Synthetic - anonymized;;0
+5;RU-0005;Volga East;RU;54.321;49.123;30000;VolgaPetro;1995;Synthetic - anonymized;;0
 5;RU-0005;Volga East;RU;54.321;49.123;30000;VolgaPetro;1995;Synthetic - anonymized;
-6;RU-0006;Siberian Gate;RU;62.5;74.0;60000;SiberiaOil;2008;Synthetic - anonymized;
-7;RU-0007;Polar Edge;RU;68.0;36.2;25000;ArcticCo;2012;Synthetic - anonymized;
-8;RU-0008;Samara Hub;RU;53.2;50.15;45000;SamaraEnergy;2000;Synthetic - anonymized;
-9;RU-0009;Ural Cross;RU;56.85;60.6;32000;UralOil;1999;Synthetic - anonymized;
-10;RU-0010;Baltic North;RU;59.9;30.3;28000;Rosneft;2003;Synthetic - anonymized;
-11;RU-0011;Caspian Link;RU;44.5;50.0;52000;CaspianOil;1996;Synthetic - anonymized;
-12;RU-0012;Kamysh Pipeline;RU;61.9;52.5;27000;KamyshPetro;2007;Synthetic - anonymized;

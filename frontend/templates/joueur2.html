@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Agent B — Console IA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    body {
+      padding: 10px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+      max-width: 100%;
+      width: 100%;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      text-shadow: 0 0 30px rgba(0,212,255,0.6);
+    }
+
+    .header .subtitle {
+      color: var(--accent-3);
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+    }
+
+    .mission-status {
+      background: linear-gradient(135deg, rgba(0,212,255,0.1) 0%, rgba(255,61,61,0.05) 100%);
+      border: 1px solid rgba(0,212,255,0.2);
+      border-radius: var(--radius);
+      padding: 15px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(10px);
+    }
+
+    .mission-status h3 {
+      color: var(--accent-3);
+      margin-bottom: 8px;
+      font-size: 1.2rem;
+    }
+
+    .mission-status p {
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .timer-container {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .timer-label {
+      color: var(--accent-2);
+      font-size: 1rem;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    #timer {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-shadow: 0 0 20px rgba(255,61,61,0.6);
+      animation: timerPulse 1s ease-in-out infinite alternate;
+      margin: 0;
+    }
+
+    .main-container {
+      max-width: 1000px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    .ai-section {
+      background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+      border-radius: var(--radius);
+      padding: 30px;
+      border: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ai-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--gradient-success);
+      opacity: 0.8;
+    }
+
+    .ai-section h2 {
+      color: var(--accent-3);
+      margin-bottom: 15px;
+      font-size: 1.6rem;
+    }
+
+    .ai-section p {
+      color: var(--muted);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .ai-image-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 25px;
+    }
+
+    .ai-image {
+      width: 300px;
+      height: 300px;
+      border-radius: var(--radius-sm);
+      border: 3px solid var(--accent-3);
+      box-shadow: 0 0 20px rgba(0,212,255,0.4);
+      animation: aiGlow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes aiGlow {
+      from { box-shadow: 0 0 20px rgba(0,212,255,0.4); }
+      to { box-shadow: 0 0 30px rgba(0,212,255,0.6), 0 0 40px rgba(0,212,255,0.3); }
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group label {
+      color: var(--accent-2);
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .form-group input {
+      background: rgba(255,255,255,0.05);
+      border: 2px solid rgba(255,255,255,0.1);
+      padding: 12px 15px;
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    .form-group input:focus {
+      box-shadow: 0 0 20px rgba(0,212,255,0.3);
+      border-color: var(--accent-3);
+      background: rgba(255,255,255,0.08);
+    }
+
+    .button-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .ai-button {
+      background: var(--gradient-success);
+      color: #fff;
+      border: 0;
+      padding: 12px 25px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      box-shadow: 0 8px 25px rgba(0,212,255,0.3);
+      transition: all 0.3s ease;
+      font-size: 0.95rem;
+    }
+
+    .ai-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 35px rgba(0,212,255,0.4);
+    }
+
+    .results-container {
+      background: rgba(255,255,255,0.05);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      margin-top: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
+    }
+
+    .results-container h3 {
+      color: var(--accent-3);
+      margin-bottom: 15px;
+      font-size: 1.2rem;
+    }
+
+    .results-content {
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+
+    .final-section {
+      background: linear-gradient(135deg, rgba(255,61,61,0.08) 0%, rgba(255,107,53,0.05) 100%);
+      border: 1px solid rgba(255,61,61,0.2);
+    }
+
+    .final-section::before {
+      background: var(--gradient-accent);
+    }
+
+    .final-section h3 {
+      color: var(--accent);
+      font-size: 1.4rem;
+    }
+
+    .final-section p {
+      color: var(--muted);
+      margin-bottom: 15px;
+    }
+
+    .final-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .final-button {
+      background: var(--gradient-accent);
+      box-shadow: 0 8px 25px rgba(255,61,61,0.3);
+    }
+
+    .final-button:hover {
+      box-shadow: 0 12px 35px rgba(255,61,61,0.4);
+    }
+
+    .final-response {
+      background: rgba(255,255,255,0.05);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      margin-top: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .status-success {
+      color: var(--success);
+      text-shadow: 0 0 10px rgba(0,255,136,0.5);
+    }
+
+    .status-error {
+      color: var(--danger);
+      text-shadow: 0 0 10px rgba(255,71,87,0.5);
+    }
+
+    /* Popup de victoire */
+    .victory-popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+    }
+
+    .victory-content {
+      background: linear-gradient(135deg, rgba(0,255,136,0.1) 0%, rgba(0,212,255,0.05) 100%);
+      border: 2px solid rgba(0,255,136,0.3);
+      border-radius: var(--radius);
+      padding: 40px;
+      text-align: center;
+      max-width: 500px;
+      width: 90%;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.8), 0 0 40px rgba(0,255,136,0.3);
+    }
+
+    .victory-icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      animation: victoryBounce 1s ease-in-out infinite alternate;
+    }
+
+    @keyframes victoryBounce {
+      from { transform: scale(1); }
+      to { transform: scale(1.1); }
+    }
+
+    .victory-content h2 {
+      color: var(--success);
+      font-size: 2rem;
+      margin-bottom: 15px;
+      text-shadow: 0 0 20px rgba(0,255,136,0.6);
+    }
+
+    .victory-content p {
+      color: var(--muted);
+      margin-bottom: 25px;
+      font-size: 1.1rem;
+    }
+
+    .victory-details {
+      background: rgba(255,255,255,0.05);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      margin-bottom: 25px;
+    }
+
+    .victory-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .victory-item:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .victory-item .label {
+      color: var(--accent-2);
+      font-weight: 600;
+    }
+
+    .victory-item .value {
+      color: var(--success);
+      font-weight: 700;
+      font-family: var(--mono);
+    }
+
+    .victory-button {
+      background: var(--gradient-success);
+      color: #fff;
+      border: 0;
+      padding: 12px 30px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 1rem;
+      box-shadow: 0 8px 25px rgba(0,255,136,0.3);
+      transition: all 0.3s ease;
+    }
+
+    .victory-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 35px rgba(0,255,136,0.4);
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 5px;
+        gap: 10px;
+      }
+      
+      .header {
+        margin-bottom: 15px;
+      }
+      
+      .header h1 {
+        font-size: 2rem;
+        line-height: 1.2;
+      }
+      
+      #timer {
+        font-size: 2rem;
+      }
+      
+      .form-grid,
+      .final-form-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      
+      .ai-section {
+        padding: 20px;
+        margin-bottom: 15px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      body {
+        padding: 5px;
+        gap: 8px;
+      }
+      
+      .header h1 {
+        font-size: 1.5rem;
+      }
+      
+      #timer {
+        font-size: 1.8rem;
+      }
+      
+      .ai-section {
+        padding: 15px;
+        margin-bottom: 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h1>🤖 Agent B — Console IA</h1>
+    <p class="subtitle">Interface de prédiction IA pour la mission</p>
+    
+    <div class="mission-status">
+      <h3>📋 Mission Status</h3>
+      <p>Vous êtes connecté à la console IA. Utilisez l'intelligence artificielle pour calculer les scores de confiance des pipelines et collaborer avec l'Agent A pour identifier la fuite.</p>
+    </div>
+  </div>
+
+  <div class="timer-container">
+    <div class="timer-label">⏰ Temps restant</div>
+    <div id="timer">30:00</div>
+  </div>
+
+    <!-- Bloc IA Prediction -->
+    <div class="ai-section">
+      <h2>💡 Calcul du score IA</h2>
+      <p>Entrez les informations d'un pipeline pour obtenir le score IA et le transmettre à l'Agent A.</p>
+
+      <div class="ai-image-container">
+        <img src="/puzzle/image" alt="IA Engine" class="ai-image" />
+      </div>
+
+      <form id="predictForm" class="form-grid">
+        <div class="form-group">
+          <label>Latitude</label>
+          <input id="lat" type="number" step="any" required />
+        </div>
+        <div class="form-group">
+          <label>Longitude</label>
+          <input id="lon" type="number" step="any" required />
+        </div>
+        <div class="form-group">
+          <label>Capacité</label>
+          <input id="capacity" type="number" step="any" required />
+        </div>
+        <div class="form-group">
+          <label>Année</label>
+          <input id="year" type="number" required />
+        </div>
+        
+        <div class="button-container">
+          <button type="submit" class="ai-button">🔎 Calculer le score</button>
+        </div>
+      </form>
+
+      <div id="predictResults" class="results-container">
+        <h3>📊 Résultats IA</h3>
+        <div class="results-content">⏳ En attente de calcul…</div>
+      </div>
+    </div>
+
+    <!-- Bloc Validation Finale -->
+    <div class="ai-section final-section">
+      <h3>🚨 Validation finale</h3>
+      <p>Une fois que l'Agent A a validé son tableau, entrez le <strong>site_code</strong> et le <strong>code secret</strong> pour déclencher la coupure.</p>
+
+      <form class="final-form-grid">
+        <div class="form-group">
+          <label>Pipeline (site_code)</label>
+          <input id="finalSite" />
+        </div>
+        <div class="form-group">
+          <label>Code secret</label>
+          <input id="finalCode" />
+        </div>
+      </form>
+
+      <div class="button-container">
+        <button id="submitFinalBtn" class="ai-button final-button">🧩 Activer la coupure</button>
+      </div>
+
+      <div id="finalResponse" class="final-response"></div>
+    </div>
+  </div>
+
+  <!-- Popup de victoire -->
+  <div id="victoryPopup" class="victory-popup" style="display: none;">
+    <div class="victory-content">
+      <div class="victory-icon">🎉</div>
+      <h2>Mission Accomplie !</h2>
+      <p>Félicitations ! Vous avez réussi à sécuriser le pipeline et éviter l'explosion.</p>
+      <div class="victory-buttons">
+        <button onclick="closeVictoryPopup()" class="victory-button">Fermer</button>
+        <button onclick="restartGame()" class="victory-button restart-button">🔄 Nouvelle partie</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script -->
+  <script src="/static/js/joueur2.js"></script>
+</body>
+</html>

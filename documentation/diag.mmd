@@ -1,0 +1,26 @@
+flowchart LR
+    %% Joueurs
+    J1[Joueur 1\nManipule CSV & Puzzle]
+    J2[Joueur 2\nIA / prédiction]
+
+    %% Backend
+    API[FastAPI\nRoutes REST + Templates]
+
+    %% Données & IA
+    CSV[CSV pipelines / mapping_codes]
+    MODEL[KNN Regressor\nModèle IA]
+    PUZZLE[Validation Puzzle\nOpenCV]
+
+    %% Flux entre joueurs et backend
+    J1 -->|Soumet positions / scores| API
+    J2 -->|Envoie prédiction IA| API
+    API -->|Accès données| CSV
+    API -->|Prédiction| MODEL
+    API -->|Validation puzzle| PUZZLE
+    API -->|Résultat / score| J1
+    API -->|Résultat / score| J2
+
+    %% Flow final
+    J1 -->|Code final| API
+    API -->|Succès / échec| J1
+    API -->|Succès / échec| J2
