@@ -2,51 +2,368 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Joueur 1 – Puzzle</title>
-  <!-- Script JS corrigé -->
+  <title>Agent A — Interface Puzzle</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/static/style.css">
   <script src="/static/js/joueur1.js" defer></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      max-width: 800px;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      text-shadow: 0 0 30px rgba(255,61,61,0.6);
+    }
+
+    .header .subtitle {
+      color: var(--accent-3);
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+    }
+
+    .mission-status {
+      background: linear-gradient(135deg, rgba(0,212,255,0.1) 0%, rgba(255,61,61,0.05) 100%);
+      border: 1px solid rgba(0,212,255,0.2);
+      border-radius: var(--radius);
+      padding: 15px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(10px);
+    }
+
+    .mission-status h3 {
+      color: var(--accent-3);
+      margin-bottom: 8px;
+      font-size: 1.2rem;
+    }
+
+    .mission-status p {
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .timer-container {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .timer-label {
+      color: var(--accent-2);
+      font-size: 1rem;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    #timer {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-shadow: 0 0 20px rgba(255,61,61,0.6);
+      animation: timerPulse 1s ease-in-out infinite alternate;
+      margin: 0;
+    }
+
+    .progress-container {
+      width: 100%;
+      max-width: 400px;
+      margin: 15px auto;
+    }
+
+    .progress-label {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 5px;
+      text-align: center;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    #progressBar {
+      height: 100%;
+      background: var(--gradient-accent);
+      border-radius: 4px;
+      transition: width 0.8s ease;
+      box-shadow: 0 0 10px rgba(255,61,61,0.5);
+    }
+
+    .puzzle-section {
+      background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+      border-radius: var(--radius);
+      padding: 30px;
+      margin-bottom: 30px;
+      border: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      text-align: center;
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .puzzle-section h2 {
+      color: var(--accent);
+      margin-bottom: 20px;
+      font-size: 1.8rem;
+    }
+
+    .puzzle-instructions {
+      color: var(--muted);
+      margin-bottom: 25px;
+      line-height: 1.6;
+    }
+
+    #puzzleGrid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      max-width: 400px;
+      margin: 0 auto 25px;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .puzzle-piece {
+      aspect-ratio: 1;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .puzzle-piece:hover {
+      transform: scale(1.05);
+      border-color: var(--accent);
+      box-shadow: 0 0 15px rgba(255,61,61,0.4);
+    }
+
+    .puzzle-piece.selected {
+      border-color: var(--accent-3);
+      box-shadow: 0 0 20px rgba(0,212,255,0.6);
+    }
+
+    #puzzleStatus {
+      color: var(--muted);
+      margin-top: 15px;
+      font-size: 0.9rem;
+    }
+
+    .data-section {
+      background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+      border-radius: var(--radius);
+      padding: 30px;
+      margin-bottom: 30px;
+      border: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      text-align: center;
+      max-width: 1000px;
+      width: 100%;
+    }
+
+    .data-section h2 {
+      color: var(--accent-2);
+      margin-bottom: 20px;
+      font-size: 1.6rem;
+    }
+
+    #csvStatus {
+      color: var(--muted);
+      margin: 15px 0;
+      font-size: 1rem;
+    }
+
+    #csvContainer {
+      background: rgba(255,255,255,0.05);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      margin: 20px 0;
+      border: 1px solid rgba(255,255,255,0.1);
+      overflow-x: auto;
+    }
+
+    .pipeline-info {
+      background: linear-gradient(135deg, rgba(0,255,136,0.1) 0%, rgba(0,212,255,0.05) 100%);
+      border: 1px solid rgba(0,255,136,0.3);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin: 20px 0;
+      backdrop-filter: blur(10px);
+    }
+
+    .pipeline-info h3 {
+      color: var(--success);
+      margin-bottom: 15px;
+      font-size: 1.3rem;
+    }
+
+    .pipeline-info p {
+      color: var(--text);
+      margin: 8px 0;
+      font-size: 1.1rem;
+    }
+
+    .pipeline-info .code {
+      color: var(--accent);
+      font-weight: 700;
+      font-family: var(--mono);
+      font-size: 1.2rem;
+    }
+
+    #finalResult {
+      color: var(--success);
+      font-size: 1.3rem;
+      font-weight: 700;
+      text-shadow: 0 0 15px rgba(0,255,136,0.5);
+      margin-top: 20px;
+    }
+
+    .alert-popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(5px);
+    }
+
+    .alert-content {
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+      border-radius: var(--radius);
+      padding: 30px;
+      max-width: 400px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(20px);
+    }
+
+    .alert-content h3 {
+      color: var(--accent);
+      margin-bottom: 15px;
+      font-size: 1.4rem;
+    }
+
+    .alert-content p {
+      color: var(--text);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      #timer {
+        font-size: 2rem;
+      }
+      
+      #puzzleGrid {
+        max-width: 300px;
+        gap: 6px;
+      }
+    }
+  </style>
 </head>
-<body class="bg-gray-100 p-6">
+<body>
+  <div class="header">
+    <h1>🧩 Agent A — Interface Puzzle</h1>
+    <p class="subtitle">Reconstituez l'image pour accéder aux données</p>
+    
+    <div class="mission-status">
+      <h3>📋 Mission Status</h3>
+      <p>Vous devez reconstituer l'image puzzle pour débloquer l'accès aux données des pipelines. Une fois l'image reconstituée, vous pourrez accéder au tableau de données et collaborer avec l'Agent B.</p>
+    </div>
+  </div>
+
+  <div class="timer-container">
+    <div class="timer-label">⏰ Temps restant</div>
+    <div id="timer">30:00</div>
+  </div>
+
+  <div class="progress-container">
+    <div class="progress-label">📊 Progression de la mission</div>
+    <div class="progress-bar-container">
+      <div id="progressBar" style="width: 0%;"></div>
+    </div>
+  </div>
 
   <!-- Section Puzzle -->
-  <section id="puzzleSection" class="text-center">
-    <h2 class="text-2xl font-semibold mb-4">Reconstitue l'image</h2>
-    <div id="puzzleGrid" class="grid gap-2 justify-center mx-auto border rounded-lg bg-white shadow-lg p-4"
-         style="width: max-content;">
-    </div>
-    <button id="validatePuzzleBtn" class="mt-6 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-      Valider le puzzle
-    </button>
-    <p id="puzzleStatus" class="mt-3 text-gray-700"></p>
+  <section id="puzzleSection" class="puzzle-section">
+    <h2>🖼️ Reconstituez l'image</h2>
+    <p class="puzzle-instructions">Cliquez et déplacez les morceaux pour reconstituer l'image originale. Une fois l'image correctement assemblée, vous accéderez aux données des pipelines.</p>
+    
+    <div id="puzzleGrid"></div>
+    
+    <button id="validatePuzzleBtn">✅ Valider le puzzle</button>
+    <p id="puzzleStatus">Cliquez sur les morceaux pour les déplacer</p>
   </section>
 
-  <!-- Section Data cachée -->
-  <section id="dataSection" class="hidden mt-12 text-center">
-    <h2 class="text-xl font-semibold">Données & Validation</h2>
-    <div id="timer" class="text-2xl font-bold mt-2">30:00</div>
-    <div class="w-full bg-gray-300 h-2 rounded my-2">
-      <div id="progressBar" class="bg-green-500 h-2 rounded" style="width: 0%;"></div>
+  <!-- Section Data -->
+  <section id="dataSection" class="data-section" style="display: none;">
+    <h2>📊 Données des pipelines</h2>
+    <p id="csvStatus">Chargement des données...</p>
+    <div id="csvContainer"></div>
+    <button id="validateTableBtn">🔍 Valider les scores</button>
+    
+    <div id="pipelineInfo" class="pipeline-info" style="display: none;">
+      <h3>🎯 Pipeline identifié</h3>
+      <p>Pipeline détecté : <span id="pipelineCode" class="code"></span></p>
+      <p>Code secret : <span id="secretCode" class="code"></span></p>
     </div>
-    <p id="csvStatus" class="my-4 text-gray-600">Chargement...</p>
-    <div id="csvContainer" class="overflow-x-auto bg-white rounded shadow p-4"></div>
-    <button id="validateTableBtn" class="mt-6 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-      Valider les scores
-    </button>
-    <div id="pipelineInfo" class="hidden mt-4">
-      <p>Pipeline détecté : <span id="pipelineCode" class="font-semibold"></span></p>
-      <p>Code secret : <span id="secretCode" class="font-semibold"></span></p>
-    </div>
-    <p id="finalResult" class="mt-4 text-lg"></p>
+    
+    <p id="finalResult"></p>
   </section>
 
   <!-- Popup alerte -->
-  <div id="alertPopup" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-lg p-6 max-w-md text-center">
-      <p id="alertMessage" class="text-gray-800"></p>
-      <button id="closeAlert" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-        OK
-      </button>
+  <div id="alertPopup" class="alert-popup">
+    <div class="alert-content">
+      <h3>⚠️ Alerte</h3>
+      <p id="alertMessage"></p>
+      <button id="closeAlert">OK</button>
+    </div>
+  </div>
+
+  <!-- Popup de victoire -->
+  <div id="victoryPopup" class="victory-popup" style="display: none;">
+    <div class="victory-content">
+      <div class="victory-icon">🎉</div>
+      <h2>Mission Accomplie !</h2>
+      <p>Félicitations ! Vous avez réussi à sécuriser le pipeline et éviter l'explosion.</p>
+      <div class="victory-details">
+        <div class="victory-item">
+          <span class="label">Temps total :</span>
+          <span id="totalTime" class="value">--:--</span>
+        </div>
+        <div class="victory-item">
+          <span class="label">Pipeline sécurisé :</span>
+          <span id="securedPipeline" class="value">--</span>
+        </div>
+      </div>
+      <button onclick="closeVictoryPopup()" class="victory-button">Fermer</button>
     </div>
   </div>
 </body>

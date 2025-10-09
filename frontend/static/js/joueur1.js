@@ -138,6 +138,145 @@ document.addEventListener('DOMContentLoaded', () => {
   // initial render
   renderPuzzle();
 
+  // -------------------------- Timer global synchronisé --------------------------
+  let eventSource = null;
+  const TOTAL_DURATION = 30 * 60; // 30 minutes en sec
+
+  function startGlobalTimer() {
+    if (eventSource) {
+      eventSource.close();
+    }
+    
+    // Utiliser Server-Sent Events pour la synchronisation en temps réel
+    eventSource = new EventSource('/timer/stream');
+    
+    eventSource.onmessage = function(event) {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('📨 Message reçu (Joueur1):', data);
+        
+        // Vérifier si c'est une notification de synchronisation
+        if (data.type === 'timer_update') {
+          console.log('Synchronisation du timer reçue:', data);
+          // Mettre à jour immédiatement le timer
+          const timeLeft = Number(data.remaining) || 0;
+          const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+          const s = String(timeLeft % 60).padStart(2, '0');
+          
+          if (timerEl) {
+            timerEl.textContent = `${m}:${s}`;
+          }
+          if (progressBar) {
+            const progress = ((TOTAL_DURATION - timeLeft) / TOTAL_DURATION) * 100;
+            progressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+          }
+          
+          if (timeLeft <= 0) {
+            stopGlobalTimer();
+            if (finalResult) {
+              finalResult.className = 'status-error';
+              finalResult.textContent = '💥 Temps écoulé ! Explosion virtuelle !';
+            }
+            showAlert('💥 Temps écoulé ! Explosion virtuelle !');
+          }
+          return;
+        }
+        
+        // Vérifier si c'est une notification de victoire
+        if (data.type === 'game_success') {
+          console.log('🎉 Victoire reçue (Joueur1):', data);
+          stopGlobalTimer();
+          showVictoryPopup();
+          return;
+        }
+        
+        // Vérifier si le jeu est terminé
+        if (data.game_completed) {
+          console.log('🎉 Jeu terminé (Joueur1):', data);
+          stopGlobalTimer();
+          showVictoryPopup();
+          return;
+        }
+        
+        // Mise à jour normale du timer
+        const timeLeft = Number(data.remaining) || 0;
+        const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+        const s = String(timeLeft % 60).padStart(2, '0');
+        
+        if (timerEl) {
+          timerEl.textContent = `${m}:${s}`;
+        }
+        if (progressBar) {
+          const progress = ((TOTAL_DURATION - timeLeft) / TOTAL_DURATION) * 100;
+          progressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+        }
+        
+        if (timeLeft <= 0) {
+          stopGlobalTimer();
+          if (finalResult) {
+            finalResult.className = 'status-error';
+            finalResult.textContent = '💥 Temps écoulé ! Explosion virtuelle !';
+          }
+          showAlert('💥 Temps écoulé ! Explosion virtuelle !');
+        }
+      } catch (e) {
+        console.error('Erreur parsing timer data:', e);
+      }
+    };
+    
+    eventSource.onerror = function(event) {
+      console.error('Erreur EventSource timer:', event);
+      // En cas d'erreur, fallback vers la méthode classique
+      setTimeout(() => {
+        if (eventSource && eventSource.readyState === EventSource.CLOSED) {
+          startGlobalTimerFallback();
+        }
+      }, 1000);
+    };
+  }
+
+  function stopGlobalTimer() {
+    if (eventSource) {
+      eventSource.close();
+      eventSource = null;
+    }
+  }
+
+  // Fallback en cas de problème avec SSE
+  function startGlobalTimerFallback() {
+    console.log('Utilisation du fallback timer');
+    const fallbackInterval = setInterval(async () => {
+      try {
+        const res = await fetch('/timer');
+        if (!res.ok) return;
+        const data = await res.json();
+        const timeLeft = Number(data.remaining) || 0;
+        const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+        const s = String(timeLeft % 60).padStart(2, '0');
+        if (timerEl) {
+          timerEl.textContent = `${m}:${s}`;
+        }
+        if (progressBar) {
+          const progress = ((TOTAL_DURATION - timeLeft) / TOTAL_DURATION) * 100;
+          progressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+        }
+        if (timeLeft <= 0) {
+          clearInterval(fallbackInterval);
+          if (finalResult) {
+            finalResult.className = 'status-error';
+            finalResult.textContent = '💥 Temps écoulé ! Explosion virtuelle !';
+          }
+          showAlert('💥 Temps écoulé ! Explosion virtuelle !');
+        }
+      } catch (e) {
+        console.error('Erreur timer fallback:', e);
+      }
+    }, 1000);
+  }
+
+  // Démarrer le timer dès le chargement de la page
+  startGlobalTimer();
+
   // -------------------------- validation puzzle -> backend --------------------------
   validatePuzzleBtn.addEventListener('click', async () => {
     puzzleStatus.textContent = '';
@@ -165,17 +304,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         showAlert(msg + extra);
         // forcer refresh timer en demandant /timer (si présent)
-        try { await fetch('/timer'); } catch (e) { /* ignore */ }
+        try { 
+          await fetch('/timer/sync', { method: 'POST' }); 
+          // Redémarrer le timer synchronisé
+          startGlobalTimer();
+        } catch (e) { /* ignore */ }
         return;
       }
 
       // OK
       puzzleStatus.textContent = data.message || 'Puzzle résolu !';
-      puzzleStatus.className = 'text-green-600 font-semibold';
+      puzzleStatus.className = 'status-success';
       // basculer vers la section données après un court délai
       setTimeout(() => {
-        puzzleSection.classList.add('hidden');
-        dataSection.classList.remove('hidden');
+        puzzleSection.style.display = 'none';
+        dataSection.style.display = 'block';
         startGame(); // lance le reste (timer, chargement CSV...)
       }, 900);
     } catch (err) {
@@ -187,47 +330,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // -------------------------- Fonctionnalités du jeu principal --------------------------
   function startGame() {
-    // constantes et état
-    const TOTAL_DURATION = 30 * 60; // 30 minutes en sec
-    let timerInterval = null;
-
-    // démarre le timer partagé (client interroge /timer backend)
-    function startTimerLoop() {
-      if (timerInterval) clearInterval(timerInterval);
-      updateTimer(); // immediate
-      timerInterval = setInterval(updateTimer, 1000);
-    }
-    function stopTimer() {
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-        finalResult.className = 'text-green-600 font-bold';
+    // Le timer global est déjà en cours, pas besoin de le redémarrer
+    
+    function stopGame() {
+      stopGlobalTimer();
+      if (finalResult) {
+        finalResult.className = 'status-success';
         finalResult.textContent = '⏹️ Le jeu est terminé — pipeline détecté !';
-        disableInputs(true);
       }
-    }
-    async function updateTimer() {
-      try {
-        const res = await fetch('/timer');
-        if (!res.ok) return;
-        const data = await res.json();
-        const timeLeft = Number(data.remaining) || 0;
-        const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
-        const s = String(timeLeft % 60).padStart(2, '0');
-        timerEl.textContent = `${m}:${s}`;
-        if (progressBar) {
-          const progress = ((TOTAL_DURATION - timeLeft) / TOTAL_DURATION) * 100;
-          progressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
-        }
-        if (timeLeft <= 0) {
-          clearInterval(timerInterval);
-          finalResult.className = 'text-red-600 font-bold';
-          finalResult.textContent = '💥 Temps écoulé ! Explosion virtuelle !';
-          disableInputs(true);
-        }
-      } catch (e) {
-        console.error('Erreur timer:', e);
-      }
+      disableInputs(true);
     }
 
     function disableInputs(state) {
@@ -238,16 +349,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --------------------------------- CSV ---------------------------------
     async function loadCSV() {
-      csvStatus.textContent = 'Chargement des données...';
-      csvContainer.innerHTML = '';
+      if (csvStatus) csvStatus.textContent = 'Chargement des données...';
+      if (csvContainer) csvContainer.innerHTML = '';
       try {
         const res = await fetch('/country/RU', { headers: { 'X-Auth-A': '1' } });
         if (!res.ok) throw new Error(res.statusText);
         const text = await res.text();
         renderTable(text);
-        csvStatus.textContent = 'Données chargées.';
+        if (csvStatus) csvStatus.textContent = 'Données chargées.';
       } catch (e) {
-        csvStatus.textContent = `Erreur : ${e.message || e}`;
+        if (csvStatus) csvStatus.textContent = `Erreur : ${e.message || e}`;
         showAlert('Impossible de charger le CSV : ' + (e.message || e));
       }
     }
@@ -255,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderTable(csvText) {
       const lines = csvText.trim().split(/\r?\n/).filter(l => l.trim());
       if (lines.length < 2) {
-        csvContainer.innerHTML = '<div class="text-gray-600 p-4">Aucune donnée.</div>';
+        if (csvContainer) csvContainer.innerHTML = '<div style="color: var(--muted); padding: 20px; text-align: center;">Aucune donnée.</div>';
         return;
       }
 
@@ -332,80 +443,128 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       table.appendChild(tbody);
-      csvContainer.innerHTML = '';
-      csvContainer.appendChild(table);
+      if (csvContainer) {
+        csvContainer.innerHTML = '';
+        csvContainer.appendChild(table);
+      }
     }
 
     function allScoresFilled() {
+      if (!csvContainer) return false;
       const inputs = csvContainer.querySelectorAll('tbody input');
       if (!inputs.length) return false;
       return Array.from(inputs).every(i => i.value.trim() !== '');
     }
 
     // --------------------------------- validation du tableau ---------------------------------
-    validateTableBtn.addEventListener('click', async () => {
-      finalResult.textContent = '';
-      finalResult.className = '';
+    if (validateTableBtn) {
+      validateTableBtn.addEventListener('click', async () => {
+        if (finalResult) {
+          finalResult.textContent = '';
+          finalResult.className = '';
+        }
 
-      if (!allScoresFilled()) {
-        finalResult.className = 'text-red-600 font-semibold';
-        finalResult.textContent = '⚠️ Remplissez toutes les cases "Confiance (%)" avant de valider.';
-        return;
-      }
-
-      const rows = Array.from(csvContainer.querySelectorAll('tbody tr'));
-      const scores = rows.map(r => {
-        const site = r.dataset.siteCode || (r.cells[0] && r.cells[0].textContent.trim()) || '';
-        const input = r.querySelector('input');
-        return { site_code: site, score: parseFloat(input.value) };
-      });
-
-      try {
-        validateTableBtn.disabled = true;
-        const res = await fetch('/validate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ scores })
-        });
-
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-          // backend renvoie detail {message, penalty, remaining}
-          const detail = data.detail || data;
-          const message = (detail && detail.message) ? detail.message : (typeof detail === 'string' ? detail : 'Erreur validation');
-          const penalty = detail && detail.penalty ? detail.penalty : 0;
-          const remaining = detail && detail.remaining ? detail.remaining : null;
-          // afficher message d'alerte sans révéler le pipeline
-          let extra = '';
-          if (penalty) extra = `\nTemps réduit de ${Math.round(penalty / 60)} minute(s).`;
-          showAlert(message + extra);
-          // forcer refresh timer
-          await updateTimer();
+        if (!allScoresFilled()) {
+          if (finalResult) {
+            finalResult.className = 'status-error';
+            finalResult.textContent = '⚠️ Remplissez toutes les cases "Confiance (%)" avant de valider.';
+          }
           return;
         }
 
-        // succès : afficher pipeline & code secret
-        pipelineCodeEl.textContent = data.detected_site || '—';
-        secretCodeEl.textContent = data.code_secret || '—';
-        pipelineInfo.classList.remove('hidden');
-        finalResult.className = 'text-green-600 font-semibold';
-        finalResult.textContent = `✅ Tableau validé — pipeline détecté : ${data.detected_site || '—'}`;
-        disableInputs(true);
-        
-      } catch (e) {
-        showAlert('Erreur lors de la validation : ' + (e.message || e));
-      } finally {
-        validateTableBtn.disabled = false;
-      }
-    });
+        const rows = Array.from(csvContainer.querySelectorAll('tbody tr'));
+        const scores = rows.map(r => {
+          const site = r.dataset.siteCode || (r.cells[0] && r.cells[0].textContent.trim()) || '';
+          const input = r.querySelector('input');
+          return { site_code: site, score: parseFloat(input.value) };
+        });
 
-    // démarrer tout
-    startTimerLoop();
+        try {
+          validateTableBtn.disabled = true;
+          const res = await fetch('/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ scores })
+          });
+
+          const data = await res.json().catch(() => ({}));
+
+          if (!res.ok) {
+            // backend renvoie detail {message, penalty, remaining}
+            const detail = data.detail || data;
+            const message = (detail && detail.message) ? detail.message : (typeof detail === 'string' ? detail : 'Erreur validation');
+            const penalty = detail && detail.penalty ? detail.penalty : 0;
+            const remaining = detail && detail.remaining ? detail.remaining : null;
+            // afficher message d'alerte sans révéler le pipeline
+            let extra = '';
+            if (penalty) extra = `\nTemps réduit de ${Math.round(penalty / 60)} minute(s).`;
+            showAlert(message + extra);
+            // forcer refresh timer
+            try { 
+              await fetch('/timer/sync', { method: 'POST' }); 
+              // Redémarrer le timer synchronisé
+              startGlobalTimer();
+            } catch (e) { /* ignore */ }
+            return;
+          }
+
+          // succès : afficher pipeline & code secret
+          if (pipelineCodeEl) pipelineCodeEl.textContent = data.detected_site || '—';
+          if (secretCodeEl) secretCodeEl.textContent = data.code_secret || '—';
+          if (pipelineInfo) pipelineInfo.style.display = 'block';
+          if (finalResult) {
+            finalResult.className = 'status-success';
+            finalResult.textContent = `✅ Tableau validé — pipeline détecté : ${data.detected_site || '—'}`;
+          }
+          disableInputs(true);
+          
+        } catch (e) {
+          showAlert('Erreur lors de la validation : ' + (e.message || e));
+        } finally {
+          validateTableBtn.disabled = false;
+        }
+      });
+    }
+
+    // démarrer le chargement du CSV
     loadCSV();
   }
 
   // si on ouvre directement la page dataSection (par exemple pour debug) on peut démarrer le jeu
   // mais normalement on lance startGame après validation du puzzle
   // startGame();
+
+  // Fonction pour afficher la popup de victoire
+  function showVictoryPopup() {
+    console.log('🎉 Affichage popup victoire (Joueur1)');
+    const popup = document.getElementById('victoryPopup');
+    const totalTimeEl = document.getElementById('totalTime');
+    const securedPipelineEl = document.getElementById('securedPipeline');
+    
+    if (!popup) {
+      console.error('❌ Popup de victoire non trouvée dans le DOM');
+      return;
+    }
+    
+    // Calculer le temps total écoulé
+    const startTime = new Date().getTime() - (30 * 60 * 1000); // Approximation
+    const totalSeconds = Math.floor((new Date().getTime() - startTime) / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    if (totalTimeEl) totalTimeEl.textContent = timeString;
+    if (securedPipelineEl) securedPipelineEl.textContent = 'Pipeline sécurisé';
+    
+    popup.style.display = 'flex';
+    console.log('✅ Popup de victoire affichée');
+  }
+
+  // Fonction pour fermer la popup
+  window.closeVictoryPopup = function() {
+    const popup = document.getElementById('victoryPopup');
+    if (popup) {
+      popup.style.display = 'none';
+    }
+  }
 });

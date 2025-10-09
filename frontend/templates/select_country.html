@@ -2,101 +2,331 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Choisissez un pays</title>
+    <title>Pipeline Rescue — Sélection du pays</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="/static/style.css">
     <style>
-        /* Styles spécifiques grid pays */
+        body {
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            max-width: 800px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(255,61,61,0.6);
+        }
+
+        .header .subtitle {
+            color: var(--accent-3);
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+
+        .mission-brief {
+            background: linear-gradient(135deg, rgba(255,61,61,0.1) 0%, rgba(0,212,255,0.05) 100%);
+            border: 1px solid rgba(255,61,61,0.2);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .mission-brief h3 {
+            color: var(--accent);
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+
+        .mission-brief p {
+            color: var(--muted);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .timer-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .timer-label {
+            color: var(--accent-2);
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        #timer {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-shadow: 0 0 20px rgba(255,61,61,0.6);
+            animation: timerPulse 1s ease-in-out infinite alternate;
+            margin: 0;
+        }
+
+        .countries-container {
+            max-width: 900px;
+            width: 100%;
+        }
+
         .grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-gap: 20px;
-            max-width: 600px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
             margin: 0 auto;
         }
+
         .country {
-            background-color: var(--panel);
+            background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
             border-radius: var(--radius);
             box-shadow: var(--shadow);
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            padding: 10px;
+            transition: all 0.3s ease;
+            padding: 0;
             overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
         }
+
+        .country::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-accent);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .country:hover::before {
+            transform: scaleX(1);
+        }
+
         .country:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 25px rgba(211, 47, 47, 0.4);
+            transform: translateY(-8px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.9), 0 0 40px rgba(255,61,61,0.3);
         }
+
         .country img {
             width: 100%;
             height: 200px;
             object-fit: cover;
-            border-radius: var(--radius);
+            border-radius: var(--radius) var(--radius) 0 0;
+            transition: transform 0.3s ease;
         }
+
+        .country:hover img {
+            transform: scale(1.05);
+        }
+
+        .country-info {
+            padding: 20px;
+        }
+
         .country-name {
-            margin-top: 10px;
-            font-size: 18px;
-            font-weight: bold;
+            font-size: 1.4rem;
+            font-weight: 700;
             color: var(--accent);
+            margin-bottom: 8px;
+            text-align: center;
         }
+
+        .country-code {
+            font-size: 0.9rem;
+            color: var(--muted);
+            text-align: center;
+            font-family: var(--mono);
+            letter-spacing: 1px;
+        }
+
         .error {
             color: var(--danger);
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+            text-shadow: 0 0 10px rgba(255,71,87,0.5);
+            animation: errorShake 0.5s ease-in-out;
         }
-        #timer {
-            font-size: 2rem;
-            margin-bottom: 15px;
-            color: var(--accent-2);
+
+        .warning {
+            background: linear-gradient(135deg, rgba(255,165,2,0.1) 0%, rgba(255,165,2,0.05) 100%);
+            border: 1px solid rgba(255,165,2,0.3);
+            border-radius: var(--radius-sm);
+            padding: 15px;
+            margin-bottom: 20px;
+            color: var(--warning);
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .warning-icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 20px;
+            }
+            
+            #timer {
+                font-size: 2.5rem;
+            }
         }
     </style>
 </head>
 <body>
-<h1>Choisissez un pays</h1>
+    <div class="header">
+        <h1>🌍 Sélection du pays</h1>
+        <p class="subtitle">Choisissez votre zone d'opération</p>
+        
+        <div class="mission-brief">
+            <h3>📋 Mission Briefing</h3>
+            <p>Un sabotage a été détecté sur un pipeline russe. Votre mission : identifier la source de la fuite et empêcher l'explosion. <strong>Attention :</strong> Seule la Russie contient les vraies données nécessaires à votre mission.</p>
+        </div>
 
-{% if error %}
-    <div class="error">{{ error }}</div>
-{% endif %}
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
 
-<div id="timer">30:00</div>
+        <div class="warning">
+            <span class="warning-icon">⚠️</span>
+            <strong>Attention :</strong> Choisir un mauvais pays vous fera perdre 5 minutes précieuses !
+        </div>
+    </div>
 
-<div class="grid">
-    <a href="/select_country/choose/russie" class="country" data-code="RU">
-        <img src="/static/img/russie.jpg" alt="Russie">
-        <div class="country-name">Russie</div>
-    </a>
-    <a href="/select_country/choose/chine" class="country" data-code="CN">
-        <img src="/static/img/chine.jpg" alt="Chine">
-        <div class="country-name">Chine</div>
-    </a>
-    <a href="/select_country/choose/inde" class="country" data-code="IN">
-        <img src="/static/img/inde.jpg" alt="Inde">
-        <div class="country-name">Inde</div>
-    </a>
-    <a href="/select_country/choose/australie" class="country" data-code="AU">
-        <img src="/static/img/australie.jpg" alt="Australie">
-        <div class="country-name">Australie</div>
-    </a>
-</div>
+    <div class="timer-container">
+        <div class="timer-label">⏰ Temps restant</div>
+        <div id="timer">30:00</div>
+    </div>
+
+    <div class="countries-container">
+        <div class="grid">
+            <a href="/select_country/choose/russie" class="country" data-code="RU">
+                <img src="/static/img/russie.jpg" alt="Russie">
+                <div class="country-info">
+                    <div class="country-name">🇷🇺 Russie</div>
+                    <div class="country-code">RU</div>
+                </div>
+            </a>
+            <a href="/select_country/choose/chine" class="country" data-code="CN">
+                <img src="/static/img/chine.jpg" alt="Chine">
+                <div class="country-info">
+                    <div class="country-name">🇨🇳 Chine</div>
+                    <div class="country-code">CN</div>
+                </div>
+            </a>
+            <a href="/select_country/choose/inde" class="country" data-code="IN">
+                <img src="/static/img/inde.jpg" alt="Inde">
+                <div class="country-info">
+                    <div class="country-name">🇮🇳 Inde</div>
+                    <div class="country-code">IN</div>
+                </div>
+            </a>
+            <a href="/select_country/choose/australie" class="country" data-code="AU">
+                <img src="/static/img/australie.jpg" alt="Australie">
+                <div class="country-info">
+                    <div class="country-name">🇦🇺 Australie</div>
+                    <div class="country-code">AU</div>
+                </div>
+            </a>
+        </div>
+    </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const countries = document.querySelectorAll('.country');
     const timerEl = document.getElementById('timer');
-    let totalTime = 30 * 60; // 30 minutes
-    let start = Date.now();
+    let eventSource = null;
 
-    function updateTimer() {
-        const elapsed = Math.floor((Date.now() - start)/1000);
-        const remaining = Math.max(totalTime - elapsed, 0);
-        const m = String(Math.floor(remaining/60)).padStart(2,'0');
-        const s = String(remaining%60).padStart(2,'0');
+    // Timer synchronisé avec le backend
+    function startTimer() {
+        if (eventSource) {
+            eventSource.close();
+        }
+        
+        // Utiliser Server-Sent Events pour la synchronisation en temps réel
+        eventSource = new EventSource('/timer/stream');
+        
+        eventSource.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                
+                // Vérifier si c'est une notification de synchronisation
+                if (data.type === 'timer_update') {
+                    console.log('Synchronisation du timer reçue (Sélection pays):', data);
+                    updateTimerDisplay(data.remaining);
+                    return;
+                }
+                
+                // Mise à jour normale du timer
+                updateTimerDisplay(data.remaining);
+            } catch (e) {
+                console.error('Erreur parsing timer data:', e);
+            }
+        };
+        
+        eventSource.onerror = function(event) {
+            console.error('Erreur EventSource timer:', event);
+            // En cas d'erreur, fallback vers la méthode classique
+            setTimeout(() => {
+                if (eventSource && eventSource.readyState === EventSource.CLOSED) {
+                    startTimerFallback();
+                }
+            }, 1000);
+        };
+    }
+
+    function updateTimerDisplay(remaining) {
+        const m = String(Math.floor(remaining / 60)).padStart(2, '0');
+        const s = String(remaining % 60).padStart(2, '0');
         timerEl.textContent = `${m}:${s}`;
+        
         if (remaining <= 0) {
             alert('💥 Temps écoulé ! Explosion virtuelle !');
             window.location.reload();
         }
     }
-    setInterval(updateTimer, 1000);
-    updateTimer();
+
+    // Fallback en cas de problème avec SSE
+    function startTimerFallback() {
+        console.log('Utilisation du fallback timer pour sélection pays');
+        const fallbackInterval = setInterval(async () => {
+            try {
+                const res = await fetch('/timer');
+                if (!res.ok) return;
+                const data = await res.json();
+                const timeLeft = Number(data.remaining) || 0;
+                updateTimerDisplay(timeLeft);
+                if (timeLeft <= 0) {
+                    clearInterval(fallbackInterval);
+                }
+            } catch (err) {
+                console.error('Erreur timer fallback:', err);
+            }
+        }, 1000);
+    }
+
+    // Démarrer le timer synchronisé
+    startTimer();
 
     countries.forEach(c => {
         c.addEventListener('click', async (e) => {
@@ -105,8 +335,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (code === 'RU') {
                 window.location.href = '/login';
             } else {
-                totalTime -= 5*60; // pénalité 5 min
-                alert('❌ Mauvais choix ! 5 minutes perdues.');
+                // La pénalité sera gérée par le backend
+                window.location.href = c.href;
             }
         });
     });

@@ -4,94 +4,492 @@
   <meta charset="utf-8" />
   <title>Agent B — Console IA</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="/static/css/style.css" />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    body {
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      max-width: 1000px;
+      width: 100%;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      text-shadow: 0 0 30px rgba(0,212,255,0.6);
+    }
+
+    .header .subtitle {
+      color: var(--accent-3);
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+    }
+
+    .mission-status {
+      background: linear-gradient(135deg, rgba(0,212,255,0.1) 0%, rgba(255,61,61,0.05) 100%);
+      border: 1px solid rgba(0,212,255,0.2);
+      border-radius: var(--radius);
+      padding: 15px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(10px);
+    }
+
+    .mission-status h3 {
+      color: var(--accent-3);
+      margin-bottom: 8px;
+      font-size: 1.2rem;
+    }
+
+    .mission-status p {
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .timer-container {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .timer-label {
+      color: var(--accent-2);
+      font-size: 1rem;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    #timer {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-shadow: 0 0 20px rgba(255,61,61,0.6);
+      animation: timerPulse 1s ease-in-out infinite alternate;
+      margin: 0;
+    }
+
+    .main-container {
+      max-width: 1000px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    .ai-section {
+      background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+      border-radius: var(--radius);
+      padding: 30px;
+      border: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ai-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--gradient-success);
+      opacity: 0.8;
+    }
+
+    .ai-section h2 {
+      color: var(--accent-3);
+      margin-bottom: 15px;
+      font-size: 1.6rem;
+    }
+
+    .ai-section p {
+      color: var(--muted);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .ai-image-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 25px;
+    }
+
+    .ai-image {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 3px solid var(--accent-3);
+      box-shadow: 0 0 20px rgba(0,212,255,0.4);
+      animation: aiGlow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes aiGlow {
+      from { box-shadow: 0 0 20px rgba(0,212,255,0.4); }
+      to { box-shadow: 0 0 30px rgba(0,212,255,0.6), 0 0 40px rgba(0,212,255,0.3); }
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group label {
+      color: var(--accent-2);
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .form-group input {
+      background: rgba(255,255,255,0.05);
+      border: 2px solid rgba(255,255,255,0.1);
+      padding: 12px 15px;
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    .form-group input:focus {
+      box-shadow: 0 0 20px rgba(0,212,255,0.3);
+      border-color: var(--accent-3);
+      background: rgba(255,255,255,0.08);
+    }
+
+    .button-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .ai-button {
+      background: var(--gradient-success);
+      color: #fff;
+      border: 0;
+      padding: 12px 25px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      box-shadow: 0 8px 25px rgba(0,212,255,0.3);
+      transition: all 0.3s ease;
+      font-size: 0.95rem;
+    }
+
+    .ai-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 35px rgba(0,212,255,0.4);
+    }
+
+    .results-container {
+      background: rgba(255,255,255,0.05);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      margin-top: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
+    }
+
+    .results-container h3 {
+      color: var(--accent-3);
+      margin-bottom: 15px;
+      font-size: 1.2rem;
+    }
+
+    .results-content {
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+
+    .final-section {
+      background: linear-gradient(135deg, rgba(255,61,61,0.08) 0%, rgba(255,107,53,0.05) 100%);
+      border: 1px solid rgba(255,61,61,0.2);
+    }
+
+    .final-section::before {
+      background: var(--gradient-accent);
+    }
+
+    .final-section h3 {
+      color: var(--accent);
+      font-size: 1.4rem;
+    }
+
+    .final-section p {
+      color: var(--muted);
+      margin-bottom: 15px;
+    }
+
+    .final-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .final-button {
+      background: var(--gradient-accent);
+      box-shadow: 0 8px 25px rgba(255,61,61,0.3);
+    }
+
+    .final-button:hover {
+      box-shadow: 0 12px 35px rgba(255,61,61,0.4);
+    }
+
+    .final-response {
+      background: rgba(255,255,255,0.05);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      margin-top: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .status-success {
+      color: var(--success);
+      text-shadow: 0 0 10px rgba(0,255,136,0.5);
+    }
+
+    .status-error {
+      color: var(--danger);
+      text-shadow: 0 0 10px rgba(255,71,87,0.5);
+    }
+
+    /* Popup de victoire */
+    .victory-popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+    }
+
+    .victory-content {
+      background: linear-gradient(135deg, rgba(0,255,136,0.1) 0%, rgba(0,212,255,0.05) 100%);
+      border: 2px solid rgba(0,255,136,0.3);
+      border-radius: var(--radius);
+      padding: 40px;
+      text-align: center;
+      max-width: 500px;
+      width: 90%;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.8), 0 0 40px rgba(0,255,136,0.3);
+    }
+
+    .victory-icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      animation: victoryBounce 1s ease-in-out infinite alternate;
+    }
+
+    @keyframes victoryBounce {
+      from { transform: scale(1); }
+      to { transform: scale(1.1); }
+    }
+
+    .victory-content h2 {
+      color: var(--success);
+      font-size: 2rem;
+      margin-bottom: 15px;
+      text-shadow: 0 0 20px rgba(0,255,136,0.6);
+    }
+
+    .victory-content p {
+      color: var(--muted);
+      margin-bottom: 25px;
+      font-size: 1.1rem;
+    }
+
+    .victory-details {
+      background: rgba(255,255,255,0.05);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      margin-bottom: 25px;
+    }
+
+    .victory-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .victory-item:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .victory-item .label {
+      color: var(--accent-2);
+      font-weight: 600;
+    }
+
+    .victory-item .value {
+      color: var(--success);
+      font-weight: 700;
+      font-family: var(--mono);
+    }
+
+    .victory-button {
+      background: var(--gradient-success);
+      color: #fff;
+      border: 0;
+      padding: 12px 30px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 1rem;
+      box-shadow: 0 8px 25px rgba(0,255,136,0.3);
+      transition: all 0.3s ease;
+    }
+
+    .victory-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 35px rgba(0,255,136,0.4);
+    }
+
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      #timer {
+        font-size: 2rem;
+      }
+      
+      .form-grid,
+      .final-form-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+    }
+  </style>
 </head>
 
-<body class="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
-  <!-- HEADER -->
-  <header class="flex justify-between items-center bg-gray-900 px-6 py-3 border-b border-gray-700">
-    <h1 class="text-xl font-bold text-blue-400">🤖 Agent B — Console IA</h1>
-    <div class="flex items-center gap-4">
-      <div id="timer" class="font-mono text-lg text-amber-400">30:00</div>
-      <a href="/" class="text-red-400 hover:text-red-300">↩ Quitter</a>
+<body>
+  <div class="header">
+    <h1>🤖 Agent B — Console IA</h1>
+    <p class="subtitle">Interface de prédiction IA pour la mission</p>
+    
+    <div class="mission-status">
+      <h3>📋 Mission Status</h3>
+      <p>Vous êtes connecté à la console IA. Utilisez l'intelligence artificielle pour calculer les scores de confiance des pipelines et collaborer avec l'Agent A pour identifier la fuite.</p>
     </div>
-  </header>
+  </div>
 
-  <!-- MAIN -->
-  <main class="flex-1 p-6 flex flex-col items-center">
+  <div class="timer-container">
+    <div class="timer-label">⏰ Temps restant</div>
+    <div id="timer">30:00</div>
+  </div>
+
     <!-- Bloc IA Prediction -->
-    <div class="w-full max-w-2xl bg-gray-900/70 p-6 rounded-2xl shadow-lg border border-gray-700">
-      <h2 class="text-lg font-semibold text-blue-300 mb-4">💡 Calcul du score IA</h2>
-      <p class="text-sm mb-4 text-gray-400">
-        Entrez les informations d’un pipeline pour obtenir le score IA et le transmettre à l’Agent A.
-      </p>
+    <div class="ai-section">
+      <h2>💡 Calcul du score IA</h2>
+      <p>Entrez les informations d'un pipeline pour obtenir le score IA et le transmettre à l'Agent A.</p>
 
-      <div class="flex justify-center mb-4">
-        <img src="/puzzle/image" alt="IA Engine" class="w-40 h-40 opacity-90" />
+      <div class="ai-image-container">
+        <img src="/puzzle/image" alt="IA Engine" class="ai-image" />
       </div>
 
-      <form id="predictForm" class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="text-gray-300 text-sm">Latitude</label>
-          <input id="lat" type="number" step="any" required class="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-2 focus:ring-blue-400" />
+      <form id="predictForm" class="form-grid">
+        <div class="form-group">
+          <label>Latitude</label>
+          <input id="lat" type="number" step="any" required />
         </div>
-        <div>
-          <label class="text-gray-300 text-sm">Longitude</label>
-          <input id="lon" type="number" step="any" required class="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-2 focus:ring-blue-400" />
+        <div class="form-group">
+          <label>Longitude</label>
+          <input id="lon" type="number" step="any" required />
         </div>
-        <div>
-          <label class="text-gray-300 text-sm">Capacité</label>
-          <input id="capacity" type="number" step="any" required class="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-2 focus:ring-blue-400" />
+        <div class="form-group">
+          <label>Capacité</label>
+          <input id="capacity" type="number" step="any" required />
         </div>
-        <div>
-          <label class="text-gray-300 text-sm">Année</label>
-          <input id="year" type="number" required class="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-2 focus:ring-blue-400" />
+        <div class="form-group">
+          <label>Année</label>
+          <input id="year" type="number" required />
         </div>
-
-        <div class="col-span-2 flex justify-center mt-3">
-          <button class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg shadow">
-            🔎 Calculer le score
-          </button>
+        
+        <div class="button-container">
+          <button type="submit" class="ai-button">🔎 Calculer le score</button>
         </div>
       </form>
 
-      <div id="predictResults"
-           class="mt-4 p-3 text-center font-mono bg-gray-800/80 rounded-lg border border-gray-700 text-blue-300">
-        ⏳ En attente de calcul…
+      <div id="predictResults" class="results-container">
+        <h3>📊 Résultats IA</h3>
+        <div class="results-content">⏳ En attente de calcul…</div>
       </div>
     </div>
 
     <!-- Bloc Validation Finale -->
-    <div class="w-full max-w-2xl bg-gray-900/70 p-6 rounded-2xl shadow-lg border border-gray-700 mt-8">
-      <h3 class="text-lg font-semibold text-red-400 mb-3">🚨 Validation finale</h3>
-      <p class="text-sm text-gray-400 mb-4">
-        Une fois que l’Agent A a validé son tableau, entrez le <strong>site_code</strong> et le
-        <strong>code secret</strong> pour déclencher la coupure.
-      </p>
+    <div class="ai-section final-section">
+      <h3>🚨 Validation finale</h3>
+      <p>Une fois que l'Agent A a validé son tableau, entrez le <strong>site_code</strong> et le <strong>code secret</strong> pour déclencher la coupure.</p>
 
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="text-gray-300 text-sm">Pipeline (site_code)</label>
-          <input id="finalSite" class="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-2 focus:ring-red-400" />
+      <form class="final-form-grid">
+        <div class="form-group">
+          <label>Pipeline (site_code)</label>
+          <input id="finalSite" />
         </div>
-        <div>
-          <label class="text-gray-300 text-sm">Code secret</label>
-          <input id="finalCode" class="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-2 focus:ring-red-400" />
+        <div class="form-group">
+          <label>Code secret</label>
+          <input id="finalCode" />
         </div>
+      </form>
 
-        <div class="col-span-2 flex justify-center mt-3">
-          <button id="submitFinalBtn" class="bg-red-600 hover:bg-red-500 text-white px-5 py-2 rounded-lg shadow">
-            🧩 Activer la coupure
-          </button>
-        </div>
+      <div class="button-container">
+        <button id="submitFinalBtn" class="ai-button final-button">🧩 Activer la coupure</button>
       </div>
 
-      <div id="finalResponse"
-           class="mt-4 p-3 text-center font-semibold bg-gray-800/80 rounded-lg border border-gray-700">
-      </div>
+      <div id="finalResponse" class="final-response"></div>
     </div>
-  </main>
+  </div>
+
+  <!-- Popup de victoire -->
+  <div id="victoryPopup" class="victory-popup" style="display: none;">
+    <div class="victory-content">
+      <div class="victory-icon">🎉</div>
+      <h2>Mission Accomplie !</h2>
+      <p>Félicitations ! Vous avez réussi à sécuriser le pipeline et éviter l'explosion.</p>
+      <div class="victory-details">
+        <div class="victory-item">
+          <span class="label">Temps total :</span>
+          <span id="totalTime" class="value">--:--</span>
+        </div>
+        <div class="victory-item">
+          <span class="label">Pipeline sécurisé :</span>
+          <span id="securedPipeline" class="value">--</span>
+        </div>
+      </div>
+      <button onclick="closeVictoryPopup()" class="victory-button">Fermer</button>
+    </div>
+  </div>
 
   <!-- Script -->
   <script src="/static/js/joueur2.js"></script>
