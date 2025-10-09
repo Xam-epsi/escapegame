@@ -12,6 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copier tout le dossier parent (backend et autres modules)
 COPY backend/ ./backend
+COPY frontend ./frontend
 
 # Définir le dossier de travail final
 WORKDIR /app/backend
