@@ -1,27 +1,138 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8">
   <title>Pipeline Rescue — Accès sécurisé</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #080708, #121214);
+      font-family: var(--mono);
+    }
+
+    main.card {
+      background: var(--panel);
+      border-radius: var(--radius);
+      padding: 24px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,0.03);
+      text-align: center;
+    }
+
+    h1 {
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .lead {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 18px;
+    }
+
+    form.form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: left;
+    }
+
+    input {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.03);
+      padding: 10px;
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    input::placeholder { color: rgba(234,234,234,0.25); }
+
+    input:focus {
+      box-shadow: 0 4px 18px rgba(211,47,47,0.08);
+      border-color: rgba(211,47,47,0.6);
+    }
+
+    button {
+      background: linear-gradient(180deg, var(--accent), #b71c1c);
+      color: #fff;
+      border: 0;
+      padding: 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      box-shadow: 0 8px 20px rgba(211,47,47,0.12);
+      transition: background 0.2s;
+    }
+
+    button:hover { background: linear-gradient(180deg, #ff5252, #b71c1c); }
+
+    .error {
+      color: var(--danger);
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+  </style>
 </head>
-<body class="page">
-  <main class="card">
-    <h1>🛰️ Pipeline Rescue</h1>
-    <p class="lead">Un sabotage a eu lieu. Pour accéder au système, entrez le code trouvé dans la lettre miroir.</p>
+<body>
 
-    <form id="loginForm" class="form">
-      <label for="code">Code d’accès :</label>
-      <input id="code" name="code" autocomplete="off" placeholder="..." required />
-      <div class="actions">
-        <button type="submit">Accéder</button>  
-      </div>
-    </form>
+<main class="card">
+  <h1>🛰️ Pipeline Rescue</h1>
+  <p class="lead">Un sabotage a eu lieu. Pour accéder au système, entrez le code trouvé dans la lettre miroir.</p>
 
-    <div id="loginError" class="error" aria-live="polite"></div>
-  </main>
+  <form id="loginForm" class="form">
+    <label for="code">Code d’accès :</label>
+    <input id="code" name="code" autocomplete="off" placeholder="..." required />
+    <button type="submit">Accéder</button>
+  </form>
 
-  <script src="/static/js/login.js"></script>
+  <div id="loginError" class="error" aria-live="polite"></div>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('loginForm');
+  const input = document.getElementById('code');
+  const err = document.getElementById('loginError');
+
+  form.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    err.textContent = '';
+    const code = input.value.trim().toLowerCase();
+
+    if (!code) {
+      err.textContent = 'Entrez un code.';
+      return;
+    }
+
+    if (code === 'keep') {
+      window.location.href = '/joueur1';
+      return;
+    }
+    if (code === 'calm') {
+      window.location.href = '/joueur2';
+      return;
+    }
+
+    err.textContent = 'Accès refusé. Le code semble incorrect.';
+  });
+});
+</script>
+
 </body>
 </html>

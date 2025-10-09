@@ -53,10 +53,7 @@ projet-environnement
 │   └── commande.txt
 ├── requirements.txt
 ├── setup.sh
-├── tests
-│   ├── __init__.py
-│   ├── test_api_routes.py
-│   └── test_model_logic.py
-└── verification
+└── tests
     ├── __init__.py
-    └── test_model_predictions.py
+    ├── pytest_joueur1.py
+    └── pytest_joueur2.py
