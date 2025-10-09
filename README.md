@@ -17,7 +17,7 @@ Entre puzzle miroir, données industrielles et intelligence artificielle, la mis
 ## 🧩 Fonctionnement du jeu
 
 1. **Découverte de la lettre**  
-   - Accéder au portail sécurisé.
+   - Accéder au portail sécurisé. via une lettre ou il faut retrouver la partie manquante de l'url.
 
 2. **Choix du pays**  
    - 4 pays simulés : Inde, Russie, Australie, USA.  

@@ -21,18 +21,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const alertMessage = document.getElementById('alertMessage');
   const closeAlert = document.getElementById('closeAlert');
 
-  // sécurité si certains éléments n'existent pas dans la page
   if (!puzzleGrid || !validatePuzzleBtn) {
     console.warn('Éléments puzzle manquants dans le DOM.');
   }
 
   // -------------------------- configuration puzzle --------------------------
   const PIECES = 9;
-  // taille d'affichage d'une pièce en px (tu peux ajuster si tu veux)
   const DISPLAY_PIECE_W = 213;
   const DISPLAY_PIECE_H = 171;
 
-  // ordre courant (indices 0..8) — mélange Fisher-Yates pour meilleure randomisation
   let currentOrder = Array.from({ length: PIECES }, (_, i) => i);
   (function shuffle(arr) {
     for (let i = arr.length - 1; i > 0; i--) {
@@ -52,21 +49,19 @@ document.addEventListener('DOMContentLoaded', () => {
     alertPopup.style.display = 'flex';
   }
 
-  // -------------------------- rendu puzzle (découpage propre) --------------------------
+  // -------------------------- rendu puzzle --------------------------
   function renderPuzzle() {
     puzzleGrid.innerHTML = '';
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.src = '/puzzle/image'; // route backend qui renvoie l'image complète
+    img.src = '/puzzle/image';
 
     img.onload = () => {
-      // taille source
       const srcW = img.naturalWidth;
       const srcH = img.naturalHeight;
       const srcPieceW = Math.floor(srcW / 3);
       const srcPieceH = Math.floor(srcH / 3);
 
-      // layout : 3 colonnes
       puzzleGrid.style.gridTemplateColumns = `repeat(3, ${DISPLAY_PIECE_W}px)`;
 
       currentOrder.forEach((pieceIdx, posIdx) => {
@@ -85,9 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
         wrapper.style.border = '1px solid #e2e8f0';
         wrapper.dataset.index = posIdx;
 
-        // canvas : on dessine la portion correspondante et on l'affiche à la taille DISPLAY_W/H
         const canvas = document.createElement('canvas');
-        // dessiner en résolution d'affichage (pour éviter flou sur écrans retina on pourrait multiplier par devicePixelRatio)
         const DPR = window.devicePixelRatio || 1;
         canvas.width = Math.floor(DISPLAY_PIECE_W * DPR);
         canvas.height = Math.floor(DISPLAY_PIECE_H * DPR);
@@ -95,17 +88,11 @@ document.addEventListener('DOMContentLoaded', () => {
         canvas.style.height = `${DISPLAY_PIECE_H}px`;
 
         const ctx = canvas.getContext('2d');
-        // calculer source rectangle (précis, avec arrondi)
         const sx = col * srcPieceW;
         const sy = row * srcPieceH;
         const sWidth = srcPieceW;
         const sHeight = srcPieceH;
-        // dessiner en tenant compte du DPR
-        ctx.drawImage(
-          img,
-          sx, sy, sWidth, sHeight,
-          0, 0, canvas.width, canvas.height
-        );
+        ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
 
         wrapper.appendChild(canvas);
         wrapper.addEventListener('click', () => onPieceClick(posIdx));
@@ -121,11 +108,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function onPieceClick(i) {
     if (firstClick === null) {
       firstClick = i;
-      // signal visuel : encadrer la case sélectionnée
       const cell = puzzleGrid.querySelector(`div[data-index="${i}"]`);
       if (cell) cell.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.45)';
     } else {
-      // enlever bordure visuelle de la première
       const firstCell = puzzleGrid.querySelector(`div[data-index="${firstClick}"]`);
       if (firstCell) firstCell.style.boxShadow = '';
 
@@ -135,42 +120,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // initial render
   renderPuzzle();
 
   // -------------------------- Timer global synchronisé --------------------------
   let eventSource = null;
-  const TOTAL_DURATION = 30 * 60; // 30 minutes en sec
+  const TOTAL_DURATION = 30 * 60; // 30 minutes
+  let lastAlertTime = 0;
 
   function startGlobalTimer() {
-    if (eventSource) {
-      eventSource.close();
-    }
-    
-    // Utiliser Server-Sent Events pour la synchronisation en temps réel
+    if (eventSource) eventSource.close();
     eventSource = new EventSource('/timer/stream');
-    
+
     eventSource.onmessage = function(event) {
       try {
         const data = JSON.parse(event.data);
-        console.log('📨 Message reçu (Joueur1):', data);
-        
-        // Vérifier si c'est une notification de synchronisation
+
         if (data.type === 'timer_update') {
-          console.log('Synchronisation du timer reçue:', data);
-          // Mettre à jour immédiatement le timer
           const timeLeft = Number(data.remaining) || 0;
           const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
           const s = String(timeLeft % 60).padStart(2, '0');
-          
-          if (timerEl) {
-            timerEl.textContent = `${m}:${s}`;
-          }
+
+          if (timerEl) timerEl.textContent = `${m}:${s}`;
           if (progressBar) {
             const progress = ((TOTAL_DURATION - timeLeft) / TOTAL_DURATION) * 100;
             progressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
           }
-          
+
+          const now = Date.now();
+          if (now - lastAlertTime > 30_000 && timeLeft > 0) {
+            lastAlertTime = now;
+            showAlert('⏰ Rappel : le temps continue de s’écouler !');
+          }
+
           if (timeLeft <= 0) {
             stopGlobalTimer();
             if (finalResult) {
@@ -181,52 +162,26 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           return;
         }
-        
-        // Vérifier si c'est une notification de victoire
+
         if (data.type === 'game_success') {
-          console.log('🎉 Victoire reçue (Joueur1):', data);
           stopGlobalTimer();
           showVictoryPopup();
           return;
         }
-        
-        // Vérifier si le jeu est terminé
+
         if (data.game_completed) {
-          console.log('🎉 Jeu terminé (Joueur1):', data);
           stopGlobalTimer();
           showVictoryPopup();
           return;
         }
-        
-        // Mise à jour normale du timer
-        const timeLeft = Number(data.remaining) || 0;
-        const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
-        const s = String(timeLeft % 60).padStart(2, '0');
-        
-        if (timerEl) {
-          timerEl.textContent = `${m}:${s}`;
-        }
-        if (progressBar) {
-          const progress = ((TOTAL_DURATION - timeLeft) / TOTAL_DURATION) * 100;
-          progressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
-        }
-        
-        if (timeLeft <= 0) {
-          stopGlobalTimer();
-          if (finalResult) {
-            finalResult.className = 'status-error';
-            finalResult.textContent = '💥 Temps écoulé ! Explosion virtuelle !';
-          }
-          showAlert('💥 Temps écoulé ! Explosion virtuelle !');
-        }
+
       } catch (e) {
         console.error('Erreur parsing timer data:', e);
       }
     };
-    
+
     eventSource.onerror = function(event) {
       console.error('Erreur EventSource timer:', event);
-      // En cas d'erreur, fallback vers la méthode classique
       setTimeout(() => {
         if (eventSource && eventSource.readyState === EventSource.CLOSED) {
           startGlobalTimerFallback();
@@ -242,9 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Fallback en cas de problème avec SSE
   function startGlobalTimerFallback() {
-    console.log('Utilisation du fallback timer');
     const fallbackInterval = setInterval(async () => {
       try {
         const res = await fetch('/timer');
@@ -253,13 +206,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const timeLeft = Number(data.remaining) || 0;
         const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
         const s = String(timeLeft % 60).padStart(2, '0');
-        if (timerEl) {
-          timerEl.textContent = `${m}:${s}`;
-        }
+
+        if (timerEl) timerEl.textContent = `${m}:${s}`;
         if (progressBar) {
           const progress = ((TOTAL_DURATION - timeLeft) / TOTAL_DURATION) * 100;
           progressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
         }
+
+        const now = Date.now();
+        if (now - lastAlertTime > 30_000 && timeLeft > 0) {
+          lastAlertTime = now;
+          showAlert('⏰ Rappel : le temps continue de s’écouler !');
+        }
+
         if (timeLeft <= 0) {
           clearInterval(fallbackInterval);
           if (finalResult) {
@@ -274,15 +233,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1000);
   }
 
-  // Démarrer le timer dès le chargement de la page
   startGlobalTimer();
 
-  // -------------------------- validation puzzle -> backend --------------------------
+  // -------------------------- validation puzzle --------------------------
   validatePuzzleBtn.addEventListener('click', async () => {
     puzzleStatus.textContent = '';
     puzzleStatus.className = '';
 
-    // envoi de l'ordre actuel (positions) au backend
     try {
       validatePuzzleBtn.disabled = true;
       const res = await fetch('/puzzle/validate', {
@@ -294,33 +251,28 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json().catch(() => ({ message: 'Réponse serveur invalide' }));
 
       if (!res.ok) {
-        // backend fournit un objet detail avec message / penalty / remaining (conforme au main.py)
         const detail = data.detail || data;
-        const msg = (detail && detail.message) ? detail.message : (detail || 'Erreur validation puzzle');
-        // afficher popup d'alerte (avec info pénalité si présente)
         let extra = '';
-        if (detail && detail.penalty) {
-          extra = `\nTemps réduit de ${Math.round(detail.penalty / 60)} minute(s).`;
-        }
-        showAlert(msg + extra);
-        // forcer refresh timer en demandant /timer (si présent)
+        if (detail && detail.penalty) extra = `\nTemps réduit de ${Math.round(detail.penalty / 60)} minute(s).`;
+        showAlert((detail.message || detail.message || 'Erreur validation puzzle') + extra);
+
         try { 
           await fetch('/timer/sync', { method: 'POST' }); 
-          // Redémarrer le timer synchronisé
           startGlobalTimer();
-        } catch (e) { /* ignore */ }
+        } catch (e) { }
+
         return;
       }
 
-      // OK
       puzzleStatus.textContent = data.message || 'Puzzle résolu !';
       puzzleStatus.className = 'status-success';
-      // basculer vers la section données après un court délai
+
       setTimeout(() => {
         puzzleSection.style.display = 'none';
         dataSection.style.display = 'block';
-        startGame(); // lance le reste (timer, chargement CSV...)
+        startGame();
       }, 900);
+
     } catch (err) {
       showAlert('Erreur réseau lors de la validation du puzzle : ' + (err.message || err));
     } finally {
@@ -330,8 +282,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // -------------------------- Fonctionnalités du jeu principal --------------------------
   function startGame() {
-    // Le timer global est déjà en cours, pas besoin de le redémarrer
-    
     function stopGame() {
       stopGlobalTimer();
       if (finalResult) {
@@ -347,7 +297,6 @@ document.addEventListener('DOMContentLoaded', () => {
       validateTableBtn.disabled = state;
     }
 
-    // --------------------------------- CSV ---------------------------------
     async function loadCSV() {
       if (csvStatus) csvStatus.textContent = 'Chargement des données...';
       if (csvContainer) csvContainer.innerHTML = '';
@@ -374,7 +323,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const headerMap = {};
       headers.forEach((h, i) => headerMap[h.toLowerCase()] = i);
 
-      // colonnes à ignorer pour l'affichage
       const skipPred = (h) => {
         const lh = h.toLowerCase();
         return lh.includes('notes') || lh.includes('confidence_score') || lh.includes('is_sabot') || lh.includes('anonym') || lh.includes('synthetic');
@@ -386,7 +334,6 @@ document.addEventListener('DOMContentLoaded', () => {
       table.style.borderCollapse = 'collapse';
       table.innerHTML = '';
 
-      // thead
       const thead = document.createElement('thead');
       const trh = document.createElement('tr');
       displayHeaders.forEach(h => {
@@ -404,18 +351,14 @@ document.addEventListener('DOMContentLoaded', () => {
       thead.appendChild(trh);
       table.appendChild(thead);
 
-      // tbody
       const tbody = document.createElement('tbody');
       lines.slice(1).forEach(line => {
         const cols = line.split(';');
         const tr = document.createElement('tr');
         tr.style.borderBottom = '1px solid #f3f4f6';
 
-        // récupérer site_code index pour dataset
         const siteCodeIdx = headerMap['site_code'] ?? headerMap['site'] ?? headerMap['sitecode'] ?? null;
-        if (siteCodeIdx !== null) {
-          tr.dataset.siteCode = (cols[siteCodeIdx] || '').trim();
-        }
+        if (siteCodeIdx !== null) tr.dataset.siteCode = (cols[siteCodeIdx] || '').trim();
 
         displayHeaders.forEach(h => {
           const idx = headerMap[h.toLowerCase()];
@@ -425,7 +368,6 @@ document.addEventListener('DOMContentLoaded', () => {
           tr.appendChild(td);
         });
 
-        // colonne de saisie confiance
         const tdScore = document.createElement('td');
         tdScore.style.padding = '6px 8px';
         const inp = document.createElement('input');
@@ -456,7 +398,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return Array.from(inputs).every(i => i.value.trim() !== '');
     }
 
-    // --------------------------------- validation du tableau ---------------------------------
     if (validateTableBtn) {
       validateTableBtn.addEventListener('click', async () => {
         if (finalResult) {
@@ -490,25 +431,19 @@ document.addEventListener('DOMContentLoaded', () => {
           const data = await res.json().catch(() => ({}));
 
           if (!res.ok) {
-            // backend renvoie detail {message, penalty, remaining}
             const detail = data.detail || data;
             const message = (detail && detail.message) ? detail.message : (typeof detail === 'string' ? detail : 'Erreur validation');
             const penalty = detail && detail.penalty ? detail.penalty : 0;
-            const remaining = detail && detail.remaining ? detail.remaining : null;
-            // afficher message d'alerte sans révéler le pipeline
             let extra = '';
             if (penalty) extra = `\nTemps réduit de ${Math.round(penalty / 60)} minute(s).`;
             showAlert(message + extra);
-            // forcer refresh timer
             try { 
               await fetch('/timer/sync', { method: 'POST' }); 
-              // Redémarrer le timer synchronisé
               startGlobalTimer();
-            } catch (e) { /* ignore */ }
+            } catch (e) {}
             return;
           }
 
-          // succès : afficher pipeline & code secret
           if (pipelineCodeEl) pipelineCodeEl.textContent = data.detected_site || '—';
           if (secretCodeEl) secretCodeEl.textContent = data.code_secret || '—';
           if (pipelineInfo) pipelineInfo.style.display = 'block';
@@ -517,7 +452,6 @@ document.addEventListener('DOMContentLoaded', () => {
             finalResult.textContent = `✅ Tableau validé — pipeline détecté : ${data.detected_site || '—'}`;
           }
           disableInputs(true);
-          
         } catch (e) {
           showAlert('Erreur lors de la validation : ' + (e.message || e));
         } finally {
@@ -526,45 +460,30 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // démarrer le chargement du CSV
     loadCSV();
   }
 
-  // si on ouvre directement la page dataSection (par exemple pour debug) on peut démarrer le jeu
-  // mais normalement on lance startGame après validation du puzzle
-  // startGame();
-
-  // Fonction pour afficher la popup de victoire
+  // -------------------------- popup victoire --------------------------
   function showVictoryPopup() {
-    console.log('🎉 Affichage popup victoire (Joueur1)');
     const popup = document.getElementById('victoryPopup');
     const totalTimeEl = document.getElementById('totalTime');
     const securedPipelineEl = document.getElementById('securedPipeline');
-    
-    if (!popup) {
-      console.error('❌ Popup de victoire non trouvée dans le DOM');
-      return;
-    }
-    
-    // Calculer le temps total écoulé
-    const startTime = new Date().getTime() - (30 * 60 * 1000); // Approximation
+    if (!popup) return;
+
+    const startTime = new Date().getTime() - (30 * 60 * 1000);
     const totalSeconds = Math.floor((new Date().getTime() - startTime) / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    
+
     if (totalTimeEl) totalTimeEl.textContent = timeString;
     if (securedPipelineEl) securedPipelineEl.textContent = 'Pipeline sécurisé';
-    
+
     popup.style.display = 'flex';
-    console.log('✅ Popup de victoire affichée');
   }
 
-  // Fonction pour fermer la popup
   window.closeVictoryPopup = function() {
     const popup = document.getElementById('victoryPopup');
-    if (popup) {
-      popup.style.display = 'none';
-    }
+    if (popup) popup.style.display = 'none';
   }
 });

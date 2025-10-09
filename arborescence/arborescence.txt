@@ -31,6 +31,14 @@ projet-environnement
 │   ├── poutine_bears.png
 │   ├── process_saved_scores.py
 │   └── saved_scores.csv
+├── documentation
+│   ├── Documentation_Technique.md
+│   ├── Guide_Joueur1.md
+│   ├── Guide_Joueur2.md
+│   ├── Indices_Mission.md
+│   ├── Solution_Complète.md
+│   ├── diag.mmd
+│   └── diagramme.png
 ├── frontend
 │   ├── static
 │   │   ├── img
