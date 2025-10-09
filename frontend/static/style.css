@@ -27,7 +27,10 @@
 
 /* Reset & layout */
 *{box-sizing:border-box}
-html,body{height:100%}
+html,body{
+  min-height:100%;
+  height:auto;
+}
 body{
   margin:0;
   font-family: var(--mono);
@@ -38,11 +41,13 @@ body{
   -moz-osx-font-smoothing:grayscale;
   padding:20px;
   display:flex;
-  justify-content:center;
-  align-items:flex-start;
+  flex-direction: column;
+  justify-content:flex-start;
+  align-items:center;
   gap:20px;
   position: relative;
   overflow-x: hidden;
+  min-height: 100vh;
 }
 
 /* Animated background particles */
@@ -71,7 +76,16 @@ body::before {
 }
 
 /* Page container */
-.page{width:100%;max-width:1040px;display:flex;flex-direction:column;gap:14px;align-items:stretch}
+.page{
+  width:100%;
+  max-width:1040px;
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+  align-items:stretch;
+  min-height: 100vh;
+  padding: 0 10px;
+}
 
 /* Topbar */
 .topbar{display:flex;justify-content:space-between;align-items:center;padding:6px 0}
@@ -469,18 +483,31 @@ button:active{
 @media (max-width: 768px) {
   body {
     padding: 10px;
+    gap: 15px;
+  }
+  
+  .page {
+    gap: 15px;
+    padding: 0 5px;
   }
   
   .card {
     padding: 16px;
+    margin-bottom: 10px;
   }
   
   h1 {
     font-size: 1.8rem;
+    margin-bottom: 10px;
   }
   
   .timer {
     font-size: 2rem;
+  }
+  
+  /* Améliorer l'espacement vertical */
+  .card + .card {
+    margin-top: 10px;
   }
   
   .country-grid {
@@ -491,6 +518,69 @@ button:active{
   .puzzle-grid {
     max-width: 300px;
     gap: 6px;
+  }
+}
+
+/* Améliorations pour très petits écrans */
+@media (max-width: 480px) {
+  body {
+    padding: 5px;
+    gap: 10px;
+  }
+  
+  .page {
+    gap: 10px;
+    padding: 0;
+  }
+  
+  .card {
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  
+  h1 {
+    font-size: 1.5rem;
+    line-height: 1.2;
+  }
+  
+  h2 {
+    font-size: 1.2rem;
+  }
+  
+  .timer {
+    font-size: 1.8rem;
+  }
+  
+  /* Réduire les marges et paddings */
+  .topbar {
+    padding: 4px 0;
+  }
+  
+  .form {
+    gap: 6px;
+  }
+  
+  .btn-row {
+    gap: 8px;
+    margin: 6px 0;
+  }
+}
+
+/* Améliorer le défilement et la visibilité */
+@media (max-width: 1024px) {
+  body {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  
+  .page {
+    width: 100%;
+    max-width: none;
+  }
+  
+  .card {
+    width: 100%;
+    box-sizing: border-box;
   }
 }
 

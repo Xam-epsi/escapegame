@@ -7,17 +7,18 @@
   <link rel="stylesheet" href="/static/style.css" />
   <style>
     body {
-      padding: 20px;
+      padding: 10px;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
+      gap: 15px;
     }
 
     .header {
       text-align: center;
-      margin-bottom: 30px;
-      max-width: 1000px;
+      margin-bottom: 20px;
+      max-width: 100%;
       width: 100%;
     }
 
@@ -376,8 +377,18 @@
     }
 
     @media (max-width: 768px) {
+      body {
+        padding: 5px;
+        gap: 10px;
+      }
+      
+      .header {
+        margin-bottom: 15px;
+      }
+      
       .header h1 {
         font-size: 2rem;
+        line-height: 1.2;
       }
       
       #timer {
@@ -388,6 +399,31 @@
       .final-form-grid {
         grid-template-columns: 1fr;
         gap: 12px;
+      }
+      
+      .ai-section {
+        padding: 20px;
+        margin-bottom: 15px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      body {
+        padding: 5px;
+        gap: 8px;
+      }
+      
+      .header h1 {
+        font-size: 1.5rem;
+      }
+      
+      #timer {
+        font-size: 1.8rem;
+      }
+      
+      .ai-section {
+        padding: 15px;
+        margin-bottom: 10px;
       }
     }
   </style>
