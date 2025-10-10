@@ -253,14 +253,79 @@ async def validate(payload: ValidatePayload):
 @router.post("/final")
 async def final_action(payload: FinalPayload):
     site = payload.site_code
+    code_a = payload.code_a
+    
+    print(f"🔍 Final action - Site: {site}, Code: {code_a}")
+    print(f"🔍 CURRENT_SECRETS: {globals.CURRENT_SECRETS}")
+    print(f"🔍 MAPPING: {globals.MAPPING}")
+    
     if not site:
-        raise HTTPException(status_code=400, detail="site_code requis")
+        print("❌ Site code manquant")
+        # Au lieu d'une erreur 400, traiter comme une défaite
+        globals.GAME_COMPLETED = True
+        
+        defeat_data = {
+            "type": "game_defeat",
+            "message": "💥 Site code manquant. Mission échouée !",
+            "timestamp": time.time()
+        }
+        print(f"📢 Envoi notification défaite (site manquant): {defeat_data}")
+        await notify_all_websockets(defeat_data)
+        
+        return {"result": "defeat", "message": "💥 Site code manquant. Mission échouée !"}
 
-    expected = globals.CURRENT_SECRETS.get(site) or globals.MAPPING.get(site)
+    # Normaliser le site_code pour la comparaison (majuscules, supprimer espaces)
+    site_normalized = site.upper().strip()
+    print(f"🔍 Site normalisé: '{site}' → '{site_normalized}'")
+    
+    # Chercher dans CURRENT_SECRETS avec normalisation
+    expected = None
+    for key, value in globals.CURRENT_SECRETS.items():
+        if key.upper().strip() == site_normalized:
+            expected = value
+            print(f"🔍 Trouvé dans CURRENT_SECRETS: {key} → {value}")
+            break
+    
+    # Si pas trouvé, chercher dans MAPPING avec normalisation
     if expected is None:
-        raise HTTPException(status_code=400, detail="Aucun code attendu pour ce site (pas validé).")
+        for key, value in globals.MAPPING.items():
+            if key.upper().strip() == site_normalized:
+                expected = value
+                print(f"🔍 Trouvé dans MAPPING: {key} → {value}")
+                break
+    
+    print(f"🔍 Code attendu pour {site_normalized}: {expected}")
+    
+    # Si le site n'existe pas, traiter comme une défaite au lieu d'une erreur 400
+    if expected is None:
+        print(f"❌ Site {site_normalized} non trouvé - défaite !")
+        print(f"   Sites disponibles dans CURRENT_SECRETS: {list(globals.CURRENT_SECRETS.keys())}")
+        print(f"   Sites disponibles dans MAPPING: {list(globals.MAPPING.keys())}")
+        
+        # Marquer le jeu comme terminé (défaite)
+        globals.GAME_COMPLETED = True
+        
+        # Notifier tous les clients de la défaite
+        defeat_data = {
+            "type": "game_defeat",
+            "message": "💥 Site non validé. Fuite détectée. Mission échouée !",
+            "timestamp": time.time()
+        }
+        print(f"📢 Envoi notification défaite (site non validé): {defeat_data}")
+        await notify_all_websockets(defeat_data)
+        
+        return {"result": "defeat", "message": "💥 Site non validé. Fuite détectée. Mission échouée !"}
 
-    if payload.code_a == expected:
+    # Normaliser le code pour la comparaison (supprimer espaces)
+    code_normalized = str(code_a).strip()
+    expected_normalized = str(expected).strip()
+    
+    print(f"🔍 Comparaison normalisée:")
+    print(f"   Code fourni: '{code_a}' → '{code_normalized}'")
+    print(f"   Code attendu: '{expected}' → '{expected_normalized}'")
+    
+    if code_normalized == expected_normalized:
+        print("✅ Code correct - victoire !")
         # Marquer le jeu comme terminé
         globals.GAME_COMPLETED = True
         
@@ -275,6 +340,7 @@ async def final_action(payload: FinalPayload):
         
         return {"result": "success", "message": "✅ Pipeline sécurisé. Pollution évitée."}
     else:
+        print("❌ Code incorrect - défaite !")
         # Marquer le jeu comme terminé (défaite)
         globals.GAME_COMPLETED = True
         
@@ -288,6 +354,24 @@ async def final_action(payload: FinalPayload):
         await notify_all_websockets(defeat_data)
         
         return {"result": "defeat", "message": "💥 Code incorrect. Fuite détectée. Mission échouée !"}
+
+@router.post("/timer/start")
+def start_timer():
+    """Démarre le timer si ce n'est pas déjà fait"""
+    if globals.TIMER_STARTED_AT is None:
+        globals.TIMER_STARTED_AT = time.time()
+        print(f"⏰ Timer démarré à {globals.TIMER_STARTED_AT}")
+    
+    elapsed = int(time.time() - globals.TIMER_STARTED_AT)
+    remaining = max(globals.TOTAL_DURATION - elapsed, 0)
+    
+    return {
+        "message": "Timer démarré",
+        "remaining": remaining,
+        "elapsed": elapsed,
+        "timestamp": time.time(),
+        "started": True
+    }
 
 @router.get("/timer")
 def get_timer():
@@ -315,6 +399,73 @@ def force_timer_sync():
         "elapsed": elapsed,
         "timestamp": time.time(),
         "synced": True
+    }
+
+@router.get("/timer/stream")
+async def timer_stream():
+    """Endpoint EventSource pour le timer (fallback)"""
+    from fastapi.responses import StreamingResponse
+    import asyncio
+    
+    async def generate_timer_events():
+        while True:
+            try:
+                if globals.GAME_COMPLETED:
+                    data = {
+                        "type": "timer_update",
+                        "remaining": 0,
+                        "elapsed": 0,
+                        "timestamp": time.time(),
+                        "game_completed": True
+                    }
+                    yield f"data: {json.dumps(data)}\n\n"
+                    break
+                
+                if globals.TIMER_STARTED_AT is None:
+                    globals.TIMER_STARTED_AT = time.time()
+                
+                elapsed = int(time.time() - globals.TIMER_STARTED_AT)
+                remaining = max(globals.TOTAL_DURATION - elapsed, 0)
+                
+                data = {
+                    "type": "timer_update",
+                    "remaining": remaining,
+                    "elapsed": elapsed,
+                    "timestamp": time.time(),
+                    "game_completed": False
+                }
+                
+                yield f"data: {json.dumps(data)}\n\n"
+                
+                if remaining <= 0:
+                    break
+                    
+                await asyncio.sleep(1)
+                
+            except Exception as e:
+                print(f"❌ Erreur EventSource timer: {e}")
+                break
+    
+    return StreamingResponse(
+        generate_timer_events(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Cache-Control"
+        }
+    )
+
+@router.get("/debug/state")
+def get_debug_state():
+    """Endpoint de debug pour vérifier l'état du jeu"""
+    return {
+        "CURRENT_SECRETS": globals.CURRENT_SECRETS,
+        "MAPPING": globals.MAPPING,
+        "GAME_COMPLETED": globals.GAME_COMPLETED,
+        "TIMER_STARTED_AT": globals.TIMER_STARTED_AT,
+        "TOTAL_DURATION": globals.TOTAL_DURATION
     }
 
 @router.post("/game/reset")

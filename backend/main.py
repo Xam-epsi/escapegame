@@ -12,6 +12,15 @@ from backend.models.ia_model import train_or_load_model
 from backend.utils.loader import load_mapping_codes
 from backend import globals
 
+# --- IMPORT CONFIGURATION AZURE ---
+try:
+    from azure_config import get_azure_config, AZURE_CONFIG
+    azure_info = get_azure_config()
+    print(f"🔵 Configuration Azure: {azure_info}")
+except ImportError:
+    azure_info = {"is_azure": False}
+    print("🔵 Configuration Azure non disponible")
+
 # ======================================================
 # CONFIGURATION DE L’APPLICATION
 # ======================================================
@@ -30,9 +39,20 @@ app.mount("/static", StaticFiles(directory=os.path.join(FRONTEND_DIR, "static"))
 templates = Jinja2Templates(directory=os.path.join(FRONTEND_DIR, "templates"))
 
 # --- Middleware CORS ---
+# Configuration CORS optimisée pour Azure
+cors_origins = ["*"]
+if azure_info.get("is_azure"):
+    # Sur Azure, être plus restrictif avec les origines
+    cors_origins = [
+        "https://*.azurewebsites.net",
+        "https://*.azurestaticapps.net", 
+        "http://localhost:*",
+        "https://localhost:*"
+    ]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

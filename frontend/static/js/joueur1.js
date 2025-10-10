@@ -172,6 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // -------------------------- Timer global synchronisé avec WebSocket --------------------------
   let websocket = null;
+  let eventsource = null;
   const TOTAL_DURATION = 30 * 60; // 30 minutes
   let lastAlertTime = 0;
   let reconnectAttempts = 0;
@@ -189,11 +190,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (websocket) {
       websocket.close();
     }
+    if (eventsource) {
+      eventsource.close();
+    }
 
     // Initialiser le temps de début du timer
     window.timerStartTime = Math.floor(Date.now() / 1000);
 
-    // Déterminer l'URL WebSocket
+    // Déterminer l'URL WebSocket - Azure nécessite wss:// pour HTTPS
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/timer/ws`;
     
@@ -268,6 +272,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     websocket.onerror = function(event) {
       console.error('❌ Erreur WebSocket timer:', event);
+      console.error('   Détails de l\'erreur:', {
+        type: event.type,
+        target: event.target,
+        readyState: event.target?.readyState,
+        url: event.target?.url
+      });
+      
+      // Sur Azure, si wss:// échoue, essayer ws:// en fallback
+      if (window.location.protocol === 'https:' && reconnectAttempts === 0) {
+        console.log('🔄 Tentative fallback ws:// pour Azure');
+        setTimeout(() => {
+          const fallbackUrl = `ws://${window.location.host}/timer/ws`;
+          console.log('🔌 Connexion WebSocket fallback:', fallbackUrl);
+          websocket = new WebSocket(fallbackUrl);
+          setupWebSocketHandlers();
+        }, 1000);
+      }
     };
 
     websocket.onclose = function(event) {
@@ -281,10 +302,95 @@ document.addEventListener('DOMContentLoaded', () => {
           startGlobalTimer();
         }, 2000 * reconnectAttempts); // Délai progressif
       } else {
-        console.error('❌ Échec de reconnexion WebSocket, passage au mode fallback');
+        console.error('❌ Échec de reconnexion WebSocket, passage au mode EventSource');
+        startEventSourceTimer();
+      }
+    };
+    
+    // Fonction pour configurer les handlers WebSocket (pour le fallback)
+    function setupWebSocketHandlers() {
+      websocket.onopen = function(event) {
+        console.log('✅ WebSocket timer connecté (fallback)');
+        reconnectAttempts = 0;
+      };
+
+      websocket.onmessage = function(event) {
+        try {
+          const data = JSON.parse(event.data);
+
+          if (data.type === 'timer_update') {
+            const timeLeft = Number(data.remaining) || 0;
+            const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+            const s = String(timeLeft % 60).padStart(2, '0');
+
+            if (timerEl) timerEl.textContent = `${m}:${s}`;
+            if (progressBar) {
+              const progress = ((TOTAL_DURATION - timeLeft) / TOTAL_DURATION) * 100;
+              progressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+            }
+
+            const now = Date.now();
+            if (now - lastAlertTime > 300_000 && timeLeft > 0) {
+              lastAlertTime = now;
+              showAlert('⏰ Rappel : le temps continue de s\'écouler !');
+            }
+
+            if (timeLeft <= 0) {
+              stopGlobalTimer();
+              if (finalResult) {
+                finalResult.className = 'status-error';
+                finalResult.textContent = '💥 Temps écoulé ! Explosion virtuelle !';
+              }
+              showAlert('💥 Temps écoulé ! Explosion virtuelle !');
+            }
+            return;
+          }
+
+          if (data.type === 'game_success') {
+            victoryTime = Math.floor(Date.now() / 1000);
+            stopGlobalTimer();
+            showVictoryPopup();
+            return;
+          }
+
+          if (data.type === 'game_defeat') {
+            console.log('💥 Défaite reçue via WebSocket (fallback):', data);
+            stopGlobalTimer();
+            showDefeatPopup();
+            return;
+          }
+
+          if (data.game_completed) {
+            victoryTime = Math.floor(Date.now() / 1000);
+            stopGlobalTimer();
+            showVictoryPopup();
+            return;
+          }
+
+        } catch (e) {
+          console.error('Erreur parsing WebSocket timer data (fallback):', e);
+        }
+      };
+
+      websocket.onerror = function(event) {
+        console.error('❌ Erreur WebSocket timer (fallback):', event);
+      };
+
+      websocket.onclose = function(event) {
+        console.log('🔌 WebSocket timer fermé (fallback):', event.code, event.reason);
+        
+        if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+          reconnectAttempts++;
+          console.log(`🔄 Tentative de reconnexion WebSocket ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}`);
+          setTimeout(() => {
+            startGlobalTimer();
+          }, 2000 * reconnectAttempts);
+        } else {
+          console.error('❌ Échec de reconnexion WebSocket, passage au mode fallback');
           startGlobalTimerFallback();
         }
-    };
+      };
+    }
   }
 
   function stopGlobalTimer() {
@@ -292,13 +398,120 @@ document.addEventListener('DOMContentLoaded', () => {
       websocket.close();
       websocket = null;
     }
+    if (eventsource) {
+      eventsource.close();
+      eventsource = null;
+    }
+  }
+
+  function startEventSourceTimer() {
+    console.log('🔄 Démarrage EventSource timer (fallback)');
+    
+    if (eventsource) {
+      eventsource.close();
+    }
+
+    // Déterminer l'URL EventSource
+    const esUrl = `${window.location.protocol}//${window.location.host}/timer/stream`;
+    console.log('🔌 Connexion EventSource timer:', esUrl);
+    
+    eventsource = new EventSource(esUrl);
+    
+    eventsource.onopen = function(event) {
+      console.log('✅ EventSource timer connecté');
+      reconnectAttempts = 0;
+    };
+    
+    eventsource.onmessage = function(event) {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('📥 Message EventSource reçu:', data);
+        
+        if (data.type === 'timer_update') {
+          const timeLeft = Number(data.remaining) || 0;
+          const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+          const s = String(timeLeft % 60).padStart(2, '0');
+
+          if (timerEl) timerEl.textContent = `${m}:${s}`;
+          if (progressBar) {
+            const progress = ((TOTAL_DURATION - timeLeft) / TOTAL_DURATION) * 100;
+            progressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+          }
+
+          const now = Date.now();
+          if (now - lastAlertTime > 300_000 && timeLeft > 0) {
+            lastAlertTime = now;
+            showAlert('⏰ Rappel : le temps continue de s\'écouler !');
+          }
+
+          if (timeLeft <= 0) {
+            stopGlobalTimer();
+            if (finalResult) {
+              finalResult.className = 'status-error';
+              finalResult.textContent = '💥 Temps écoulé ! Explosion virtuelle !';
+            }
+            showAlert('💥 Temps écoulé ! Explosion virtuelle !');
+          }
+          return;
+        }
+
+        if (data.type === 'game_success') {
+          victoryTime = Math.floor(Date.now() / 1000);
+          stopGlobalTimer();
+          showVictoryPopup();
+          return;
+        }
+
+        if (data.type === 'game_defeat') {
+          console.log('💥 Défaite reçue via EventSource:', data);
+          stopGlobalTimer();
+          showDefeatPopup();
+          return;
+        }
+
+        if (data.game_completed) {
+          victoryTime = Math.floor(Date.now() / 1000);
+          stopGlobalTimer();
+          showVictoryPopup();
+          return;
+        }
+
+      } catch (e) {
+        console.error('Erreur parsing EventSource timer data:', e);
+      }
+    };
+    
+    eventsource.onerror = function(event) {
+      console.error('❌ Erreur EventSource timer:', event);
+      console.error('   Détails de l\'erreur:', {
+        type: event.type,
+        target: event.target,
+        readyState: event.target?.readyState,
+        url: event.target?.url
+      });
+      
+      // Si EventSource échoue, passer au mode HTTP polling
+      if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        reconnectAttempts++;
+        console.log(`🔄 Tentative de reconnexion EventSource ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}`);
+        setTimeout(() => {
+          startEventSourceTimer();
+        }, 2000 * reconnectAttempts);
+      } else {
+        console.error('❌ Échec de reconnexion EventSource, passage au mode HTTP polling');
+        startGlobalTimerFallback();
+      }
+    };
   }
 
   function startGlobalTimerFallback() {
     const fallbackInterval = setInterval(async () => {
       try {
         const res = await fetch('/timer');
-        if (!res.ok) return;
+        if (!res.ok) {
+          console.error(`❌ Erreur HTTP timer fallback: ${res.status} ${res.statusText}`);
+          return;
+        }
         const data = await res.json();
         const timeLeft = Number(data.remaining) || 0;
         const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
@@ -325,7 +538,8 @@ document.addEventListener('DOMContentLoaded', () => {
           showAlert('💥 Temps écoulé ! Explosion virtuelle !');
         }
       } catch (e) {
-        console.error('Erreur timer fallback:', e);
+        console.error('❌ Erreur timer fallback:', e);
+        console.error('   Détails de l\'erreur:', e.message, e.stack);
       }
     }, 1000);
   }

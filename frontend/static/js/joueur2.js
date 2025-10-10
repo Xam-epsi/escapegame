@@ -61,15 +61,9 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('❌ Erreur démarrage timer serveur:', err);
     }
 
-    // Déterminer l'URL WebSocket - utiliser ws:// pour éviter les problèmes SSL
-    // Si on est sur HTTPS, essayer d'abord wss:// puis fallback sur ws://
-    let wsUrl;
-    if (window.location.protocol === 'https:') {
-      // Essayer d'abord wss://, si ça échoue on utilisera le fallback
-      wsUrl = `wss://${window.location.host}/timer/ws`;
-    } else {
-      wsUrl = `ws://${window.location.host}/timer/ws`;
-    }
+    // Déterminer l'URL WebSocket - Azure nécessite wss:// pour HTTPS
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/timer/ws`;
     
     console.log('🔌 Connexion WebSocket timer:', wsUrl);
     websocket = new WebSocket(wsUrl);
@@ -130,10 +124,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     websocket.onerror = function(event) {
       console.error('❌ Erreur WebSocket timer:', event);
+      console.error('   Détails de l\'erreur:', {
+        type: event.type,
+        target: event.target,
+        readyState: event.target?.readyState,
+        url: event.target?.url
+      });
       
-      // Si on est sur HTTPS et qu'on a une erreur SSL, essayer ws:// à la place
+      // Sur Azure, si wss:// échoue, essayer ws:// en fallback
       if (window.location.protocol === 'https:' && reconnectAttempts === 0) {
-        console.log('🔄 Tentative avec ws:// au lieu de wss://');
+        console.log('🔄 Tentative fallback ws:// pour Azure');
         setTimeout(() => {
           const fallbackUrl = `ws://${window.location.host}/timer/ws`;
           console.log('🔌 Connexion WebSocket fallback:', fallbackUrl);
@@ -279,9 +279,9 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           res = await fetch('/timer');
         } catch (sslError) {
-          // Si erreur SSL, essayer avec HTTP au lieu de HTTPS
+          // Si erreur SSL sur Azure, essayer avec HTTP au lieu de HTTPS
           if (window.location.protocol === 'https:') {
-            console.log('🔄 Tentative fallback HTTP au lieu de HTTPS');
+            console.log('🔄 Tentative fallback HTTP pour Azure');
             const httpUrl = window.location.href.replace('https://', 'http://');
             const timerUrl = httpUrl + '/timer';
             res = await fetch(timerUrl);
@@ -368,6 +368,23 @@ document.addEventListener('DOMContentLoaded', () => {
   window.testDefeatPopup = function() {
     console.log('🧪 Test popup de défaite');
     showDefeatPopup();
+  };
+  
+  // Fonction de debug pour vérifier l'état du jeu
+  window.debugGameState = async function() {
+    console.log('🔍 Vérification de l\'état du jeu...');
+    try {
+      const res = await fetch('/debug/state');
+      if (res.ok) {
+        const data = await res.json();
+        console.log('📊 État du jeu:', data);
+        alert(`État du jeu:\nCURRENT_SECRETS: ${JSON.stringify(data.CURRENT_SECRETS)}\nMAPPING: ${JSON.stringify(data.MAPPING)}`);
+      } else {
+        console.error('❌ Erreur debug state:', res.status);
+      }
+    } catch (e) {
+      console.error('❌ Exception debug state:', e);
+    }
   };
 
   async function forceTimerSync() {
@@ -484,8 +501,18 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ site_code: site, code_a: code })
       });
+      
+      console.log('🔍 Statut de la réponse:', res.status);
+      
       const data = await res.json();
       console.log('🔍 Réponse finale:', data);
+      
+      if (!res.ok) {
+        console.error('❌ Erreur HTTP:', res.status, data);
+        finalResp.textContent = `Erreur ${res.status}: ${data.detail || data.message || 'Erreur inconnue'}`;
+        finalResp.className = 'status-error';
+        return;
+      }
 
       if (data.result === 'success') {
         // Capturer le temps de victoire avant d'arrêter le timer
